@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,26 +10,31 @@ namespace Joomla\CMS\Table;
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\Language\Text;
+use Joomla\Database\DatabaseDriver;
 use Joomla\Registry\Registry;
 use Joomla\Utilities\ArrayHelper;
 
 /**
  * Extension table
  *
- * @since  11.1
+ * @since  1.7.0
  */
 class Extension extends Table
 {
 	/**
 	 * Constructor
 	 *
-	 * @param   \JDatabaseDriver  $db  Database driver object.
+	 * @param   DatabaseDriver  $db  Database driver object.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
-	public function __construct($db)
+	public function __construct(DatabaseDriver $db)
 	{
 		parent::__construct('#__extensions', 'extension_id', $db);
+
+		// Set the alias since the column is called enabled
+		$this->setColumnAlias('published', 'enabled');
 	}
 
 	/**
@@ -38,29 +43,27 @@ class Extension extends Table
 	 * @return  boolean  True if the object is ok
 	 *
 	 * @see     Table::check()
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function check()
 	{
-		// Check for valid name
-		if (trim($this->name) == '' || trim($this->element) == '')
+		try
 		{
-			$this->setError(\JText::_('JLIB_DATABASE_ERROR_MUSTCONTAIN_A_TITLE_EXTENSION'));
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
 
 			return false;
 		}
 
-		if (!$this->extension_id)
+		// Check for valid name
+		if (trim($this->name) == '' || trim($this->element) == '')
 		{
-			if (!$this->custom_data)
-			{
-				$this->custom_data = '';
-			}
+			$this->setError(Text::_('JLIB_DATABASE_ERROR_MUSTCONTAIN_A_TITLE_EXTENSION'));
 
-			if (!$this->system_data)
-			{
-				$this->system_data = '';
-			}
+			return false;
 		}
 
 		return true;
@@ -76,7 +79,7 @@ class Extension extends Table
 	 * @return  mixed  Null if operation was satisfactory, otherwise returns an error
 	 *
 	 * @see     Table::bind()
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function bind($array, $ignore = '')
 	{
@@ -102,11 +105,11 @@ class Extension extends Table
 	 *
 	 * @return  string  The database query result
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function find($options = array())
 	{
-		// Get the \JDatabaseQuery object
+		// Get the DatabaseQuery object
 		$query = $this->_db->getQuery(true);
 
 		foreach ($options as $col => $val)
@@ -133,7 +136,7 @@ class Extension extends Table
 	 *
 	 * @return  boolean  True on success.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function publish($pks = null, $state = 1, $userId = 0)
 	{
@@ -154,7 +157,7 @@ class Extension extends Table
 			// Nothing to set publishing state on, return false.
 			else
 			{
-				$this->setError(\JText::_('JLIB_DATABASE_ERROR_NO_ROWS_SELECTED'));
+				$this->setError(Text::_('JLIB_DATABASE_ERROR_NO_ROWS_SELECTED'));
 
 				return false;
 			}
@@ -164,7 +167,7 @@ class Extension extends Table
 		$where = $k . '=' . implode(' OR ' . $k . '=', $pks);
 
 		// Determine if there is checkin support for the table.
-		if (!property_exists($this, 'checked_out') || !property_exists($this, 'checked_out_time'))
+		if (!$this->hasField('checked_out') || !$this->hasField('checked_out_time'))
 		{
 			$checkin = '';
 		}

@@ -3,12 +3,13 @@
 	<name>mod_articles_category</name>
 	<author>Joomla! Project</author>
 	<creationDate>February 2010</creationDate>
-	<copyright>Copyright (C) 2005 - 2018 Open Source Matters. All rights reserved.</copyright>
+	<copyright>Copyright (C) 2005 - 2019 Open Source Matters. All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>admin@joomla.org</authorEmail>
 	<authorUrl>www.joomla.org</authorUrl>
 	<version>3.0.0</version>
 	<description>MOD_ARTICLES_CATEGORY_XML_DESCRIPTION</description>
+	<namespace>Joomla\Module\ArticlesCategory</namespace>
 	<files>
 		<filename module="mod_articles_category">mod_articles_category.php</filename>
 		<folder>tmpl</folder>
@@ -36,15 +37,15 @@
 				<field
 					name="show_on_article_page"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_SHOWONARTICLEPAGE_LABEL"
 					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWONARTICLEPAGE_DESC"
-					class="btn-group btn-group-yesno"
 					default="1"
 					filter="integer"
 					showon="mode:dynamic"
 					>
-					<option value="1">JSHOW</option>
-					<option value="0">JHIDE</option>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
 				</field>
 			</fieldset>
 
@@ -66,7 +67,6 @@
 					name="show_front"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_SHOWFEATURED_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWFEATURED_DESC"
 					default="show"
 					>
 					<option value="show">JSHOW</option>
@@ -83,21 +83,19 @@
 				<field
 					name="category_filtering_type"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_CATFILTERINGTYPE_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_CATFILTERINGTYPE_DESC"
-					class="btn-group btn-group-yesno"
 					default="1"
 					filter="integer"
 					>
-					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUSIVE_VALUE</option>
 					<option value="0">MOD_ARTICLES_CATEGORY_OPTION_EXCLUSIVE_VALUE</option>
+					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUSIVE_VALUE</option>
 				</field>
 
 				<field
 					name="catid"
 					type="category"
 					label="JCATEGORY"
-					description="MOD_ARTICLES_CATEGORY_FIELD_CATEGORY_DESC"
 					extension="com_content"
 					multiple="true"
 					filter="int_array"
@@ -107,21 +105,19 @@
 				<field
 					name="show_child_category_articles"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_SHOWCHILDCATEGORYARTICLES_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWCHILDCATEGORYARTICLES_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUDE_VALUE</option>
 					<option value="0">MOD_ARTICLES_CATEGORY_OPTION_EXCLUDE_VALUE</option>
+					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUDE_VALUE</option>
 				</field>
 
 				<field
 					name="levels"
 					type="number"
 					label="MOD_ARTICLES_CATEGORY_FIELD_CATDEPTH_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_CATDEPTH_DESC"
 					default="1"
 					filter="integer"
 					showon="show_child_category_articles:1"
@@ -153,21 +149,19 @@
 				<field
 					name="author_filtering_type"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_AUTHORFILTERING_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_AUTHORFILTERING_DESC"
-					class="btn-group btn-group-yesno"
 					default="1"
 					filter="integer"
 					>
-					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUSIVE_VALUE</option>
 					<option value="0">MOD_ARTICLES_CATEGORY_OPTION_EXCLUSIVE_VALUE</option>
+					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUSIVE_VALUE</option>
 				</field>
 
 				<field
 					name="created_by"
 					type="author"
 					label="MOD_ARTICLES_CATEGORY_FIELD_AUTHOR_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_AUTHOR_DESC"
 					multiple="true"
 					filter="int_array"
 					class="multipleAuthors"
@@ -182,21 +176,19 @@
 				<field
 					name="author_alias_filtering_type"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_AUTHORALIASFILTERING_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_AUTHORALIASFILTERING_DESC"
-					class="btn-group btn-group-yesno"
 					default="1"
 					filter="integer"
 					>
-					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUSIVE_VALUE</option>
 					<option value="0">MOD_ARTICLES_CATEGORY_OPTION_EXCLUSIVE_VALUE</option>
+					<option value="1">MOD_ARTICLES_CATEGORY_OPTION_INCLUSIVE_VALUE</option>
 				</field>
 
 				<field
 					name="created_by_alias"
 					type="sql"
 					label="MOD_ARTICLES_CATEGORY_FIELD_AUTHORALIAS_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_AUTHORALIAS_DESC"
 					multiple="true"
 					query="select distinct(created_by_alias) from #__content where created_by_alias != '' order by created_by_alias ASC"
 					key_field="created_by_alias"
@@ -214,7 +206,6 @@
 					name="excluded_articles"
 					type="textarea"
 					label="MOD_ARTICLES_CATEGORY_FIELD_EXCLUDEDARTICLES_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_EXCLUDEDARTICLES_DESC"
 					cols="10"
 					rows="3"
 				/>
@@ -229,7 +220,6 @@
 					name="date_filtering"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_DATEFILTERING_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_DATEFILTERING_DESC"
 					default="off"
 					>
 					<option value="off">MOD_ARTICLES_CATEGORY_OPTION_OFF_VALUE</option>
@@ -241,7 +231,6 @@
 					name="date_field"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_DATERANGEFIELD_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_DATERANGEFIELD_DESC"
 					default="a.created"
 					showon="date_filtering!:off"
 					>
@@ -254,7 +243,6 @@
 					name="start_date_range"
 					type="calendar"
 					label="MOD_ARTICLES_CATEGORY_FIELD_STARTDATE_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_STARTDATE_DESC"
 					translateformat="true"
 					showtime="true"
 					size="22"
@@ -266,7 +254,6 @@
 					name="end_date_range"
 					type="calendar"
 					label="MOD_ARTICLES_CATEGORY_FIELD_ENDDATE_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_ENDDATE_DESC"
 					translateformat="true"
 					showtime="true"
 					size="22"
@@ -278,7 +265,6 @@
 					name="relative_date"
 					type="number"
 					label="MOD_ARTICLES_CATEGORY_FIELD_RELATIVEDATE_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_RELATIVEDATE_DESC"
 					default="30"
 					filter="integer"
 					showon="date_filtering:relative"
@@ -295,7 +281,6 @@
 					name="article_ordering"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEORDERING_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEORDERING_DESC"
 					default="a.title"
 					>
 					<option value="a.ordering">MOD_ARTICLES_CATEGORY_OPTION_ORDERING_VALUE</option>
@@ -317,7 +302,6 @@
 					name="article_ordering_direction"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEORDERINGDIR_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEORDERINGDIR_DESC"
 					default="ASC"
 					>
 					<option value="DESC">MOD_ARTICLES_CATEGORY_OPTION_DESCENDING_VALUE</option>
@@ -334,7 +318,6 @@
 					name="article_grouping"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEGROUPING_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEGROUPING_DESC"
 					default="none"
 					>
 					<option value="none">JNONE</option>
@@ -342,6 +325,20 @@
 					<option value="month_year">MOD_ARTICLES_CATEGORY_OPTION_MONTHYEAR_VALUE</option>
 					<option value="author">JAUTHOR</option>
 					<option value="category_title">JCATEGORY</option>
+					<option value="tags">JTAG</option>
+				</field>
+
+				<field
+					name="date_grouping_field"
+					type="list"
+					label="MOD_ARTICLES_CATEGORY_FIELD_DATEGROUPINGFIELD_LABEL"
+					description="MOD_ARTICLES_CATEGORY_FIELD_DATEGROUPINGFIELD_DESC"
+					default="created"
+					showon="article_grouping:year,month_year"
+					>
+					<option value="created">MOD_ARTICLES_CATEGORY_OPTION_CREATED_VALUE</option>
+					<option value="modified">MOD_ARTICLES_CATEGORY_OPTION_MODIFIED_VALUE</option>
+					<option value="publish_up">MOD_ARTICLES_CATEGORY_OPTION_STARTPUBLISHING_VALUE</option>
 				</field>
 
 				<field
@@ -357,7 +354,6 @@
 					name="article_grouping_direction"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEGROUPINGDIR_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_ARTICLEGROUPINGDIR_DESC"
 					default="ksort"
 					showon="article_grouping!:none"
 					>
@@ -375,34 +371,31 @@
 				<field
 					name="link_titles"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_LINKTITLES_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_LINKTITLES_DESC"
 					default="1"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JYES</option>
 					<option value="0">JNO</option>
+					<option value="1">JYES</option>
 				</field>
 
 				<field
 					name="show_date"
 					type="radio"
+					class="switcher"
 					label="JDATE"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWDATE_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="show_date_field"
 					type="list"
 					label="MOD_ARTICLES_CATEGORY_FIELD_DATEFIELD_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_DATEFIELD_DESC"
 					default="created"
 					showon="show_date:1"
 					>
@@ -423,60 +416,67 @@
 				<field
 					name="show_category"
 					type="radio"
+					class="switcher"
 					label="JCATEGORY"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWCATEGORY_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="show_hits"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_SHOWHITS_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWHITS_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="show_author"
 					type="radio"
+					class="switcher"
 					label="JAUTHOR"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWAUTHOR_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
+				</field>
+
+				<field
+					name="show_tags"
+					type="radio"
+					class="switcher"
+					label="JTAG"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="show_introtext"
 					type="radio"
+					class="switcher"
 					label="MOD_ARTICLES_CATEGORY_FIELD_SHOWINTROTEXT_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_SHOWINTROTEXT_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="introtext_limit"
 					type="number"
 					label="MOD_ARTICLES_CATEGORY_FIELD_INTROTEXTLIMIT_LABEL"
-					description="MOD_ARTICLES_CATEGORY_FIELD_INTROTEXTLIMIT_DESC"
 					default="100"
 					filter="integer"
 					showon="show_introtext:1"
@@ -485,35 +485,32 @@
 				<field
 					name="show_readmore"
 					type="radio"
+					class="switcher"
 					label="JGLOBAL_SHOW_READMORE_LABEL"
-					description="JGLOBAL_SHOW_READMORE_DESC"
 					default="0"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="show_readmore_title"
 					type="radio"
+					class="switcher"
 					label="JGLOBAL_SHOW_READMORE_TITLE_LABEL"
-					description="JGLOBAL_SHOW_READMORE_TITLE_DESC"
 					default="1"
 					filter="integer"
-					class="btn-group btn-group-yesno"
 					showon="show_readmore:1"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
 					name="readmore_limit"
 					type="number"
 					label="JGLOBAL_SHOW_READMORE_LIMIT_LABEL"
-					description="JGLOBAL_SHOW_READMORE_LIMIT_DESC"
 					default="15"
 					filter="integer"
 					showon="show_readmore:1[AND]show_readmore_title:1"
@@ -527,14 +524,13 @@
 					name="layout"
 					type="modulelayout"
 					label="JFIELD_ALT_LAYOUT_LABEL"
-					description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+					class="custom-select"
 				/>
 
 				<field
 					name="moduleclass_sfx"
 					type="textarea"
 					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
-					description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
 					rows="3"
 				/>
 
@@ -542,7 +538,6 @@
 					name="owncache"
 					type="list"
 					label="COM_MODULES_FIELD_CACHING_LABEL"
-					description="COM_MODULES_FIELD_CACHING_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -554,7 +549,6 @@
 					name="cache_time"
 					type="number"
 					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
-					description="COM_MODULES_FIELD_CACHE_TIME_DESC"
 					default="900"
 					filter="integer"
 				/>

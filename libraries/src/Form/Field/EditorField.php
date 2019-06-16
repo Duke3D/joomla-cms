@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -12,9 +12,6 @@ defined('JPATH_PLATFORM') or die;
 
 use Joomla\CMS\Editor\Editor;
 use Joomla\CMS\Factory;
-use Joomla\CMS\Form\FormHelper;
-
-FormHelper::loadFieldClass('textarea');
 
 /**
  * A textarea field for content creation
@@ -22,7 +19,7 @@ FormHelper::loadFieldClass('textarea');
  * @see    JEditor
  * @since  1.6
  */
-class EditorField extends \JFormFieldTextarea
+class EditorField extends TextareaField
 {
 	/**
 	 * The form field type.
@@ -186,7 +183,7 @@ class EditorField extends \JFormFieldTextarea
 	}
 
 	/**
-	 * Method to attach a JForm object to the field.
+	 * Method to attach a Form object to the field.
 	 *
 	 * @param   \SimpleXMLElement  $element  The SimpleXMLElement object representing the `<field>` tag for the form field object.
 	 * @param   mixed              $value    The form field value to validate.
@@ -268,7 +265,7 @@ class EditorField extends \JFormFieldTextarea
 	}
 
 	/**
-	 * Method to get a Editor object based on the form field.
+	 * Method to get an Editor object based on the form field.
 	 *
 	 * @return  Editor  The Editor object.
 	 *
@@ -315,24 +312,12 @@ class EditorField extends \JFormFieldTextarea
 			// Create the JEditor instance based on the given editor.
 			if ($editor === null)
 			{
-				$editor = Factory::getConfig()->get('editor');
+				$editor = Factory::getApplication()->get('editor');
 			}
 
 			$this->editor = Editor::getInstance($editor);
 		}
 
 		return $this->editor;
-	}
-
-	/**
-	 * Method to get the JEditor output for an onSave event.
-	 *
-	 * @return  string  The JEditor object output.
-	 *
-	 * @since   1.6
-	 */
-	public function save()
-	{
-		return $this->getEditor()->save($this->id);
 	}
 }

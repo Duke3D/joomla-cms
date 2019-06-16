@@ -3,12 +3,13 @@
 	<name>mod_articles_latest</name>
 	<author>Joomla! Project</author>
 	<creationDate>July 2004</creationDate>
-	<copyright>Copyright (C) 2005 - 2018 Open Source Matters. All rights reserved.</copyright>
+	<copyright>Copyright (C) 2005 - 2019 Open Source Matters. All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>admin@joomla.org</authorEmail>
 	<authorUrl>www.joomla.org</authorUrl>
 	<version>3.0.0</version>
 	<description>MOD_LATEST_NEWS_XML_DESCRIPTION</description>
+	<namespace>Joomla\Module\ArticlesLatest</namespace>
 	<files>
 		<filename module="mod_articles_latest">mod_articles_latest.php</filename>
 		<folder>tmpl</folder>
@@ -26,7 +27,6 @@
 					name="catid"
 					type="category"
 					label="JCATEGORY"
-					description="MOD_LATEST_NEWS_FIELD_CATEGORY_DESC"
 					extension="com_content"
 					multiple="true"
 					filter="int_array"
@@ -36,7 +36,6 @@
 					name="count"
 					type="number"
 					label="MOD_LATEST_NEWS_FIELD_COUNT_LABEL"
-					description="MOD_LATEST_NEWS_FIELD_COUNT_DESC"
 					default="5"
 					filter="integer"
 				/>
@@ -45,7 +44,6 @@
 					name="show_featured"
 					type="list"
 					label="MOD_LATEST_NEWS_FIELD_FEATURED_LABEL"
-					description="MOD_LATEST_NEWS_FIELD_FEATURED_DESC"
 					default=""
 					filter="integer"
 					>
@@ -58,8 +56,7 @@
 					name="ordering"
 					type="list"
 					label="MOD_LATEST_NEWS_FIELD_ORDERING_LABEL"
-					description="MOD_LATEST_NEWS_FIELD_ORDERING_DESC"
-					default="published"
+					default="p_dsc"
 					>
 					<option value="c_dsc">MOD_LATEST_NEWS_VALUE_RECENT_ADDED</option>
 					<option value="m_dsc">MOD_LATEST_NEWS_VALUE_RECENT_MODIFIED</option>
@@ -72,13 +69,22 @@
 					name="user_id"
 					type="list"
 					label="MOD_LATEST_NEWS_FIELD_USER_LABEL"
-					description="MOD_LATEST_NEWS_FIELD_USER_DESC"
 					default="0"
 					>
 					<option value="0">MOD_LATEST_NEWS_VALUE_ANYONE</option>
 					<option value="by_me">MOD_LATEST_NEWS_VALUE_ADDED_BY_ME</option>
 					<option value="not_me">MOD_LATEST_NEWS_VALUE_NOTADDED_BY_ME</option>
+					<option value="created_by">MOD_LATEST_NEWS_VALUE_CREATED_BY</option>
 				</field>
+
+				<field
+					name="author"
+					type="author"
+					label="MOD_LATEST_NEWS_FIELD_AUTHOR_LABEL"
+					description="MOD_LATEST_NEWS_FIELD_AUTHOR_DESC"
+					multiple="true"
+					showon="user_id:created_by"
+				/>
 			</fieldset>
 
 			<fieldset name="advanced">
@@ -86,14 +92,13 @@
 					name="layout"
 					type="modulelayout"
 					label="JFIELD_ALT_LAYOUT_LABEL"
-					description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+					class="custom-select"
 				/>
 
 				<field
 					name="moduleclass_sfx"
 					type="textarea"
 					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
-					description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
 					rows="3"
 				/>
 
@@ -101,7 +106,6 @@
 					name="cache"
 					type="list"
 					label="COM_MODULES_FIELD_CACHING_LABEL"
-					description="COM_MODULES_FIELD_CACHING_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -113,7 +117,6 @@
 					name="cache_time"
 					type="number"
 					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
-					description="COM_MODULES_FIELD_CACHE_TIME_DESC"
 					default="900"
 					filter="integer"
 				/>

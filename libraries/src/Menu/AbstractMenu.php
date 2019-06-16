@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,42 +10,41 @@ namespace Joomla\CMS\Menu;
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\User\User;
 use Joomla\Registry\Registry;
 
 /**
  * Menu class
  *
  * @since  1.5
- * @note   Will become abstract in Joomla 4
  */
-class AbstractMenu
+abstract class AbstractMenu
 {
 	/**
 	 * Array to hold the menu items
 	 *
 	 * @var    MenuItem[]
-	 * @since  1.5
-	 * @deprecated  4.0  Will convert to $items
+	 * @since  4.0.0
 	 */
-	protected $_items = array();
+	protected $items = array();
 
 	/**
 	 * Identifier of the default menu item
 	 *
 	 * @var    integer
-	 * @since  1.5
-	 * @deprecated  4.0  Will convert to $default
+	 * @since  4.0.0
 	 */
-	protected $_default = array();
+	protected $default = array();
 
 	/**
 	 * Identifier of the active menu item
 	 *
 	 * @var    integer
-	 * @since  1.5
-	 * @deprecated  4.0  Will convert to $active
+	 * @since  4.0.0
 	 */
-	protected $_active = 0;
+	protected $active = 0;
 
 	/**
 	 * Menu instances container.
@@ -58,7 +57,7 @@ class AbstractMenu
 	/**
 	 * User object to check access levels for
 	 *
-	 * @var    \JUser
+	 * @var    User
 	 * @since  3.5
 	 */
 	protected $user;
@@ -75,15 +74,15 @@ class AbstractMenu
 		// Load the menu items
 		$this->load();
 
-		foreach ($this->_items as $item)
+		foreach ($this->getMenu() as $item)
 		{
 			if ($item->home)
 			{
-				$this->_default[trim($item->language)] = $item->id;
+				$this->default[trim($item->language)] = $item->id;
 			}
 		}
 
-		$this->user = isset($options['user']) && $options['user'] instanceof \JUser ? $options['user'] : \JFactory::getUser();
+		$this->user = isset($options['user']) && $options['user'] instanceof User ? $options['user'] : Factory::getUser();
 	}
 
 	/**
@@ -94,41 +93,20 @@ class AbstractMenu
 	 *
 	 * @return  AbstractMenu  A menu object.
 	 *
-	 * @since   1.5
-	 * @throws  \Exception
+	 * @since       1.5
+	 * @throws      \Exception
+	 * @deprecated  5.0 Use the MenuFactoryInterface from the container instead
 	 */
 	public static function getInstance($client, $options = array())
 	{
+		if (!$client)
+		{
+			throw new \Exception(Text::sprintf('JLIB_APPLICATION_ERROR_MENU_LOAD', $client), 500);
+		}
+
 		if (empty(self::$instances[$client]))
 		{
-			// Create a Menu object
-			$classname = 'JMenu' . ucfirst($client);
-
-			if (!class_exists($classname))
-			{
-				// @deprecated 4.0 Everything in this block is deprecated but the warning is only logged after the file_exists
-				// Load the menu object
-				$info = \JApplicationHelper::getClientInfo($client, true);
-
-				if (is_object($info))
-				{
-					$path = $info->path . '/includes/menu.php';
-
-					\JLoader::register($classname, $path);
-
-					if (class_exists($classname))
-					{
-						\JLog::add('Non-autoloadable Menu subclasses are deprecated, support will be removed in 4.0.', \JLog::WARNING, 'deprecated');
-					}
-				}
-			}
-
-			if (!class_exists($classname))
-			{
-				throw new \Exception(\JText::sprintf('JLIB_APPLICATION_ERROR_MENU_LOAD', $client), 500);
-			}
-
-			self::$instances[$client] = new $classname($options);
+			self::$instances[$client] = Factory::getContainer()->get(MenuFactoryInterface::class)->createMenu($client, $options);
 		}
 
 		return self::$instances[$client];
@@ -147,9 +125,9 @@ class AbstractMenu
 	{
 		$result = null;
 
-		if (isset($this->_items[$id]))
+		if (isset($this->getMenu()[$id]))
 		{
-			$result = &$this->_items[$id];
+			$result = &$this->getMenu()[$id];
 		}
 
 		return $result;
@@ -167,9 +145,9 @@ class AbstractMenu
 	 */
 	public function setDefault($id, $language = '*')
 	{
-		if (isset($this->_items[$id]))
+		if (isset($this->getMenu()[$id]))
 		{
-			$this->_default[$language] = $id;
+			$this->default[$language] = $id;
 
 			return true;
 		}
@@ -188,17 +166,15 @@ class AbstractMenu
 	 */
 	public function getDefault($language = '*')
 	{
-		if (array_key_exists($language, $this->_default))
+		if (array_key_exists($language, $this->default))
 		{
-			return $this->_items[$this->_default[$language]];
+			return $this->getMenu()[$this->default[$language]];
 		}
 
-		if (array_key_exists('*', $this->_default))
+		if (array_key_exists('*', $this->default))
 		{
-			return $this->_items[$this->_default['*']];
+			return $this->getMenu()[$this->default['*']];
 		}
-
-		return;
 	}
 
 	/**
@@ -212,14 +188,12 @@ class AbstractMenu
 	 */
 	public function setActive($id)
 	{
-		if (isset($this->_items[$id]))
+		if (isset($this->getMenu()[$id]))
 		{
-			$this->_active = $id;
+			$this->active = $id;
 
-			return $this->_items[$id];
+			return $this->getMenu()[$id];
 		}
-
-		return;
 	}
 
 	/**
@@ -231,12 +205,10 @@ class AbstractMenu
 	 */
 	public function getActive()
 	{
-		if ($this->_active)
+		if ($this->active)
 		{
-			return $this->_items[$this->_active];
+			return $this->getMenu()[$this->active];
 		}
-
-		return;
 	}
 
 	/**
@@ -258,7 +230,7 @@ class AbstractMenu
 		$values = (array) $values;
 		$count = count($attributes);
 
-		foreach ($this->_items as $item)
+		foreach ($this->getMenu() as $item)
 		{
 			if (!is_object($item))
 			{
@@ -329,7 +301,7 @@ class AbstractMenu
 	 */
 	public function getMenu()
 	{
-		return $this->_items;
+		return $this->items;
 	}
 
 	/**
@@ -347,7 +319,15 @@ class AbstractMenu
 
 		if ($menu)
 		{
-			return in_array((int) $menu->access, $this->user->getAuthorisedViewLevels());
+			$access = (int) $menu->access;
+
+			// If the accesss level is public we don't need to load the user session
+			if ($access === 1)
+			{
+				return true;
+			}
+
+			return in_array($access, $this->user->getAuthorisedViewLevels(), true);
 		}
 
 		return true;
@@ -360,8 +340,5 @@ class AbstractMenu
 	 *
 	 * @since   1.5
 	 */
-	public function load()
-	{
-		return array();
-	}
+	abstract public function load();
 }

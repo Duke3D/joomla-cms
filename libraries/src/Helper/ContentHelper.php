@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,13 +10,15 @@ namespace Joomla\CMS\Helper;
 
 defined('JPATH_PLATFORM') or die;
 
-use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Access\Access;
+use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\Language\Multilanguage;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Object\CMSObject;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
@@ -43,52 +45,110 @@ class ContentHelper
 	}
 
 	/**
-	 * Gets a list of the actions that can be performed.
+	 * Adds Count relations for Category and Tag Managers
 	 *
-	 * @param   integer  $categoryId  The category ID.
-	 * @param   integer  $id          The item ID.
-	 * @param   string   $assetName   The asset name
+	 * @param   \stdClass[]  &$items  The category or tag objects
+	 * @param   \stdClass    $config  Configuration object allowing to use a custom relations table
 	 *
-	 * @return  \JObject
+	 * @return  \stdClass[]
 	 *
-	 * @since   3.1
-	 * @deprecated  3.2  Use ContentHelper::getActions() instead
+	 * @since   3.9.1
 	 */
-	public static function _getActions($categoryId = 0, $id = 0, $assetName = '')
+	public static function countRelations(&$items, $config)
 	{
-		// Log usage of deprecated function
-		Log::add(__METHOD__ . '() is deprecated, use ContentHelper::getActions() with new arguments order instead.', Log::WARNING, 'deprecated');
+		$db = Factory::getDbo();
 
-		// Reverted a change for version 2.5.6
-		$user   = Factory::getUser();
-		$result = new \JObject;
+		// Allow custom state / condition values and custom column names to support custom components
+		$counter_names = isset($config->counter_names) ? $config->counter_names : array(
+			'-2' => 'count_trashed',
+			'0'  => 'count_unpublished',
+			'1'  => 'count_published',
+			'2'  => 'count_archived',
+		);
 
-		$path = JPATH_ADMINISTRATOR . '/components/' . $assetName . '/access.xml';
+		$usesWorkflows = (isset($config->uses_workflows) && $config->uses_workflows === true);
 
-		if (empty($id) && empty($categoryId))
+			// Index category objects by their ID
+		$records = array();
+
+		foreach ($items as $item)
 		{
-			$section = 'component';
-		}
-		elseif (empty($id))
-		{
-			$section = 'category';
-			$assetName .= '.category.' . (int) $categoryId;
-		}
-		else
-		{
-			// Used only in com_content
-			$section = 'article';
-			$assetName .= '.article.' . (int) $id;
+			$records[(int) $item->id] = $item;
 		}
 
-		$actions = Access::getActionsFromFile($path, "/access/section[@name='" . $section . "']/");
-
-		foreach ($actions as $action)
+		// The relation query does not return a value for cases without relations of a particular state / condition, set zero as default
+		foreach ($items as $item)
 		{
-			$result->set($action->name, $user->authorise($action->name, $assetName));
+			foreach ($counter_names as $n)
+			{
+				$item->{$n} = 0;
+			}
 		}
 
-		return $result;
+		// Table alias for related data table below will be 'c', and state / condition column is inside related data table
+		$related_tbl = $db->quoteName('#__' . $config->related_tbl, 'c');
+		$state_col_prefix = $usesWorkflows ? 's.' : 'c.';
+		$state_col   = $db->quoteName($state_col_prefix . $config->state_col);
+
+		// Supported cases
+		switch ($config->relation_type)
+		{
+			case 'tag_assigments':
+				$recid_col = $db->quoteName('ct.' . $config->group_col);
+
+				$query = $db->getQuery(true)
+					->from($db->quoteName('#__contentitem_tag_map', 'ct'))
+					->join('INNER', $related_tbl . ' ON ' . $db->quoteName('ct.content_item_id') . ' = ' . $db->quoteName('c.id') . ' AND ' .
+						$db->quoteName('ct.type_alias') . ' = ' . $db->quote($config->extension)
+					);
+				break;
+
+			case 'category_or_group':
+				$recid_col = $db->quoteName('c.' . $config->group_col);
+
+				$query = $db->getQuery(true)
+					->from($related_tbl);
+				break;
+
+			default:
+				return $items;
+		}
+
+		if ($usesWorkflows)
+		{
+			$query->from($db->quoteName('#__workflow_stages', 's'))
+				->from($db->quoteName('#__workflow_associations', 'a'))
+				->where($db->quoteName('s.id') . ' = ' . $db->quoteName('a.stage_id'))
+				->where($db->quoteName('a.extension') . '= ' . $db->quote($config->workflows_component))
+				->where($db->quoteName('a.item_id') . ' = ' . $db->quoteName('c.id'));
+		}
+
+		/**
+		 * Get relation counts for all category objects with single query
+		 * NOTE: 'state IN', allows counting specific states / conditions only, also prevents warnings with custom states / conditions, do not remove
+		 */
+		$query
+			->select($recid_col . ' AS catid, ' . $state_col . ' AS state, COUNT(*) AS count')
+			->where($recid_col . ' IN (' . implode(',', array_keys($records)) . ')')
+			->where($state_col . ' IN (' . implode(',', array_keys($counter_names)) . ')')
+			->group($recid_col . ', ' . $state_col);
+
+		$relationsAll = $db->setQuery($query)->loadObjectList();
+
+		// Loop through the DB data overwritting the above zeros with the found count
+		foreach ($relationsAll as $relation)
+		{
+			// Sanity check in case someone removes the state IN above ... and some views may start throwing warnings
+			if (isset($counter_names[$relation->state]))
+			{
+				$id = (int) $relation->catid;
+				$cn = $counter_names[$relation->state];
+
+				$records[$id]->{$cn} = $relation->count;
+			}
+		}
+
+		return $items;
 	}
 
 	/**
@@ -98,20 +158,12 @@ class ContentHelper
 	 * @param   string   $section    The access section name.
 	 * @param   integer  $id         The item ID.
 	 *
-	 * @return  \JObject
+	 * @return  CMSObject
 	 *
 	 * @since   3.2
 	 */
 	public static function getActions($component = '', $section = '', $id = 0)
 	{
-		// Check for deprecated arguments order
-		if (is_int($component) || $component === null)
-		{
-			$result = self::_getActions($component, $section, $id);
-
-			return $result;
-		}
-
 		$assetName = $component;
 
 		if ($section && $id)
@@ -119,7 +171,7 @@ class ContentHelper
 			$assetName .= '.' . $section . '.' . (int) $id;
 		}
 
-		$result = new \JObject;
+		$result = new CMSObject;
 
 		$user = Factory::getUser();
 
@@ -130,7 +182,7 @@ class ContentHelper
 		if ($actions === false)
 		{
 			Log::add(
-				\JText::sprintf('JLIB_ERROR_COMPONENTS_ACL_CONFIGURATION_FILE_MISSING_OR_IMPROPERLY_STRUCTURED', $component), Log::ERROR, 'jerror'
+				Text::sprintf('JLIB_ERROR_COMPONENTS_ACL_CONFIGURATION_FILE_MISSING_OR_IMPROPERLY_STRUCTURED', $component), Log::ERROR, 'jerror'
 			);
 
 			return $result;
@@ -171,7 +223,7 @@ class ContentHelper
 			}
 			else
 			{
-				$langCode = Factory::getSession()->get('plg_system_languagefilter.language');
+				$langCode = $app->getSession()->get('plg_system_languagefilter.language');
 			}
 		}
 

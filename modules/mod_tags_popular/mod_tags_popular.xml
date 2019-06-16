@@ -3,12 +3,13 @@
 	<name>mod_tags_popular</name>
 	<author>Joomla! Project</author>
 	<creationDate>January 2013</creationDate>
-	<copyright>Copyright (C) 2005 - 2018 Open Source Matters. All rights reserved.</copyright>
+	<copyright>Copyright (C) 2005 - 2019 Open Source Matters. All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>admin@joomla.org</authorEmail>
 	<authorUrl>www.joomla.org</authorUrl>
 	<version>3.1.0</version>
 	<description>MOD_TAGS_POPULAR_XML_DESCRIPTION</description>
+	<namespace>Joomla\Module\TagsPopular</namespace>
 	<files>
 		<filename module="mod_tags_popular">mod_tags_popular.php</filename>
 		<folder>tmpl</folder>
@@ -35,7 +36,6 @@
 					name="maximum"
 					type="integer"
 					label="MOD_TAGS_POPULAR_MAX_LABEL"
-					description="MOD_TAGS_POPULAR_MAX_DESC"
 					default="5"
 					filter="integer"
 					first="1"
@@ -47,7 +47,6 @@
 					name="timeframe"
 					type="list"
 					label="MOD_TAGS_POPULAR_FIELD_TIMEFRAME_LABEL"
-					description="MOD_TAGS_POPULAR_FIELD_TIMEFRAME_DESC"
 					default="alltime"
 					>
 					<option value="alltime">MOD_TAGS_POPULAR_FIELD_ALL_TIME</option>
@@ -62,7 +61,6 @@
 					name="order_value"
 					type="list"
 					label="MOD_TAGS_POPULAR_FIELD_ORDER_VALUE_LABEL"
-					description="MOD_TAGS_POPULAR_FIELD_ORDER_VALUE_DESC"
 					default="count"
 					>
 					<option value="title">MOD_TAGS_POPULAR_FIELD_ORDER_VALUE_TITLE</option>
@@ -74,7 +72,6 @@
 					name="order_direction"
 					type="list"
 					label="JGLOBAL_ORDER_DIRECTION_LABEL"
-					description="JGLOBAL_ORDER_DIRECTION_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -85,27 +82,25 @@
 				<field
 					name="display_count"
 					type="radio"
+					class="switcher"
 					label="MOD_TAGS_POPULAR_FIELD_DISPLAY_COUNT_LABEL"
-					description="MOD_TAGS_POPULAR_FIELD_DISPLAY_COUNT_DESC"
-					class="btn-group btn-group-yesno"
 					default="0"
 					filter="integer"
 					>
-					<option value="1">JYES</option>
 					<option value="0">JNO</option>
+					<option value="1">JYES</option>
 				</field>
 
 				<field
 					name="no_results_text"
 					type="radio"
+					class="switcher"
 					label="MOD_TAGS_POPULAR_FIELD_NO_RESULTS_LABEL"
-					description="MOD_TAGS_POPULAR_FIELD_NO_RESULTS_DESC"
-					class="btn-group btn-group-yesno"
 					default="0"
 					filter="integer"
 					>
-					<option value="1">JYES</option>
 					<option value="0">JNO</option>
+					<option value="1">JYES</option>
 				</field>
 			</fieldset>
 			<fieldset
@@ -135,7 +130,7 @@
 					name="layout"
 					type="modulelayout"
 					label="JFIELD_ALT_LAYOUT_LABEL"
-					description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+					class="custom-select"
 					default="_:default"
 				/>
 
@@ -143,7 +138,6 @@
 					name="moduleclass_sfx"
 					type="textarea"
 					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
-					description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
 					rows="3"
 				/>
 
@@ -151,7 +145,6 @@
 					name="owncache"
 					type="list"
 					label="COM_MODULES_FIELD_CACHING_LABEL"
-					description="COM_MODULES_FIELD_CACHING_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -163,7 +156,6 @@
 					name="cache_time"
 					type="number"
 					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
-					description="COM_MODULES_FIELD_CACHE_TIME_DESC"
 					default="900"
 					filter="integer"
 				/>

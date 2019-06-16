@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -11,6 +11,9 @@ namespace Joomla\CMS\Table;
 defined('JPATH_PLATFORM') or die;
 
 use Joomla\CMS\Application\ApplicationHelper;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\Database\DatabaseDriver;
 
 /**
  * Menu Types table
@@ -22,11 +25,11 @@ class MenuType extends Table
 	/**
 	 * Constructor
 	 *
-	 * @param   \JDatabaseDriver  $db  Database driver object.
+	 * @param   DatabaseDriver  $db  Database driver object.
 	 *
 	 * @since   1.6
 	 */
-	public function __construct(\JDatabaseDriver $db)
+	public function __construct(DatabaseDriver $db)
 	{
 		parent::__construct('#__menu_types', 'id', $db);
 	}
@@ -41,11 +44,22 @@ class MenuType extends Table
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		$this->menutype = ApplicationHelper::stringURLSafe($this->menutype);
 
 		if (empty($this->menutype))
 		{
-			$this->setError(\JText::_('JLIB_DATABASE_ERROR_MENUTYPE_EMPTY'));
+			$this->setError(Text::_('JLIB_DATABASE_ERROR_MENUTYPE_EMPTY'));
 
 			return false;
 		}
@@ -66,7 +80,7 @@ class MenuType extends Table
 
 		if ($this->_db->loadResult())
 		{
-			$this->setError(\JText::sprintf('JLIB_DATABASE_ERROR_MENUTYPE_EXISTS', $this->menutype));
+			$this->setError(Text::sprintf('JLIB_DATABASE_ERROR_MENUTYPE_EXISTS', $this->menutype));
 
 			return false;
 		}
@@ -91,7 +105,7 @@ class MenuType extends Table
 		if ($this->id)
 		{
 			// Get the user id
-			$userId = \JFactory::getUser()->id;
+			$userId = Factory::getUser()->id;
 
 			// Get the old value of the table
 			$table = Table::getInstance('Menutype', 'JTable', array('dbo' => $this->getDbo()));
@@ -109,7 +123,7 @@ class MenuType extends Table
 			if ($this->_db->loadRowList())
 			{
 				$this->setError(
-					\JText::sprintf('JLIB_DATABASE_ERROR_STORE_FAILED', get_class($this), \JText::_('JLIB_DATABASE_ERROR_MENUTYPE_CHECKOUT'))
+					Text::sprintf('JLIB_DATABASE_ERROR_STORE_FAILED', get_class($this), Text::_('JLIB_DATABASE_ERROR_MENUTYPE_CHECKOUT'))
 				);
 
 				return false;
@@ -128,7 +142,7 @@ class MenuType extends Table
 			if ($this->_db->loadRowList())
 			{
 				$this->setError(
-					\JText::sprintf('JLIB_DATABASE_ERROR_STORE_FAILED', get_class($this), \JText::_('JLIB_DATABASE_ERROR_MENUTYPE_CHECKOUT'))
+					Text::sprintf('JLIB_DATABASE_ERROR_STORE_FAILED', get_class($this), Text::_('JLIB_DATABASE_ERROR_MENUTYPE_CHECKOUT'))
 				);
 
 				return false;
@@ -176,7 +190,7 @@ class MenuType extends Table
 		if ($pk !== null)
 		{
 			// Get the user id
-			$userId = \JFactory::getUser()->id;
+			$userId = Factory::getUser()->id;
 
 			// Get the old value of the table
 			$table = Table::getInstance('Menutype', 'JTable', array('dbo' => $this->getDbo()));
@@ -192,7 +206,7 @@ class MenuType extends Table
 
 			if ($this->_db->loadRowList())
 			{
-				$this->setError(\JText::sprintf('JLIB_DATABASE_ERROR_DELETE_FAILED', get_class($this), \JText::_('JLIB_DATABASE_ERROR_MENUTYPE')));
+				$this->setError(Text::sprintf('JLIB_DATABASE_ERROR_DELETE_FAILED', get_class($this), Text::_('JLIB_DATABASE_ERROR_MENUTYPE')));
 
 				return false;
 			}
@@ -209,7 +223,7 @@ class MenuType extends Table
 
 			if ($this->_db->loadRowList())
 			{
-				$this->setError(\JText::sprintf('JLIB_DATABASE_ERROR_DELETE_FAILED', get_class($this), \JText::_('JLIB_DATABASE_ERROR_MENUTYPE')));
+				$this->setError(Text::sprintf('JLIB_DATABASE_ERROR_DELETE_FAILED', get_class($this), Text::_('JLIB_DATABASE_ERROR_MENUTYPE')));
 
 				return false;
 			}

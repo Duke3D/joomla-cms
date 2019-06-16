@@ -3,14 +3,18 @@
  * @package     Joomla.Site
  * @subpackage  Layout
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('JPATH_BASE') or die;
+
+use Joomla\CMS\Form\FormHelper;
+use Joomla\CMS\HTML\HTMLHelper;
+
 ?>
 
-<fieldset class="<?php echo !empty($displayData->formclass) ? $displayData->formclass : 'form-horizontal'; ?>">
+<fieldset class="<?php echo !empty($displayData->formclass) ? $displayData->formclass : ''; ?>">
 	<legend><?php echo $displayData->name; ?></legend>
 	<?php if (!empty($displayData->description)) : ?>
 		<p><?php echo $displayData->description; ?></p>
@@ -21,16 +25,17 @@ defined('JPATH_BASE') or die;
 			<?php $datashowon = ''; ?>
 			<?php $groupClass = $field->type === 'Spacer' ? ' field-spacer' : ''; ?>
 			<?php if ($field->showon) : ?>
-				<?php JHtml::_('jquery.framework'); ?>
-				<?php JHtml::_('script', 'jui/cms.js', array('version' => 'auto', 'relative' => true)); ?>
-				<?php $datashowon = ' data-showon=\'' . json_encode(JFormHelper::parseShowOnConditions($field->showon, $field->formControl, $field->group)) . '\''; ?>
+				<?php HTMLHelper::_('script', 'system/showon.min.js', array('version' => 'auto', 'relative' => true)); ?>
+				<?php $datashowon = ' data-showon=\'' . json_encode(FormHelper::parseShowOnConditions($field->showon, $field->formControl, $field->group)) . '\''; ?>
 			<?php endif; ?>
-			<div class="control-group<?php echo $groupClass; ?>"<?php echo $datashowon; ?>>
-				<?php if (!isset($displayData->showlabel) || $displayData->showlabel) : ?>
-					<div class="control-label"><?php echo $field->label; ?></div>
+			
+				<?php if (isset($displayData->showlabel)) : ?>
+				<div class="control-group<?php echo $groupClass; ?>"<?php echo $datashowon; ?>>
+					<div class="controls"><?php echo $field->input; ?></div>
+				</div>
+				<?php else : ?>
+					<?php echo $field->renderField(); ?>
 				<?php endif; ?>
-				<div class="controls"><?php echo $field->input; ?></div>
-			</div>
 		<?php endforeach; ?>
 	<?php endforeach; ?>
 </fieldset>

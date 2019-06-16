@@ -2,13 +2,16 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 namespace Joomla\CMS\Table;
 
 defined('JPATH_PLATFORM') or die;
+
+use Joomla\CMS\Language\Text;
+use Joomla\Database\DatabaseDriver;
 
 /**
  * Tags table
@@ -20,11 +23,11 @@ class ContentType extends Table
 	/**
 	 * Constructor
 	 *
-	 * @param   \JDatabaseDriver  $db  A database connector object
+	 * @param   DatabaseDriver  $db  A database connector object
 	 *
 	 * @since   3.1
 	 */
-	public function __construct($db)
+	public function __construct(DatabaseDriver $db)
 	{
 		parent::__construct('#__content_types', 'type_id', $db);
 	}
@@ -39,6 +42,17 @@ class ContentType extends Table
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		// Check for valid name.
 		if (trim($this->type_title) === '')
 		{
@@ -71,7 +85,7 @@ class ContentType extends Table
 
 		if ($table->load(array('type_alias' => $this->type_alias)) && ($table->type_id != $this->type_id || $this->type_id == 0))
 		{
-			$this->setError(\JText::_('COM_TAGS_ERROR_UNIQUE_ALIAS'));
+			$this->setError(Text::_('COM_TAGS_ERROR_UNIQUE_ALIAS'));
 
 			return false;
 		}
@@ -132,7 +146,7 @@ class ContentType extends Table
 		{
 			if (is_object($tableInfo->special) && isset($tableInfo->special->type) && isset($tableInfo->special->prefix))
 			{
-				$class = isset($tableInfo->special->class) ? $tableInfo->special->class : 'Joomla\\CMS\\Table\\Table';
+				$class = $tableInfo->special->class ?? 'Joomla\\CMS\\Table\\Table';
 
 				if (!class_implements($class, 'Joomla\\CMS\\Table\\TableInterface'))
 				{

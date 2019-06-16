@@ -3,12 +3,15 @@
  * @package     Joomla.Libraries
  * @subpackage  HTML
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\Document\HtmlDocument;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Session\Session;
 use Joomla\Utilities\ArrayHelper;
 
 /**
@@ -30,13 +33,13 @@ abstract class JHtmlForm
 	/**
 	 * Displays a hidden token field to reduce the risk of CSRF exploits
 	 *
-	 * Use in conjunction with JSession::checkToken()
+	 * Use in conjunction with Session::checkToken()
 	 *
 	 * @param   array  $attribs  Input element attributes.
 	 *
 	 * @return  string  A hidden input field with a token
 	 *
-	 * @see     JSession::checkToken()
+	 * @see     Session::checkToken()
 	 * @since   1.5
 	 */
 	public static function token(array $attribs = array())
@@ -48,7 +51,7 @@ abstract class JHtmlForm
 			$attributes .= ' ' . ArrayHelper::toString($attribs);
 		}
 
-		return '<input type="hidden" name="' . JSession::getFormToken() . '" value="1"' . $attributes . ' />';
+		return '<input type="hidden" name="' . Session::getFormToken() . '" value="1"' . $attributes . '>';
 	}
 
 	/**
@@ -67,15 +70,15 @@ abstract class JHtmlForm
 			return;
 		}
 
-		/** @var JDocumentHtml $doc */
-		$doc = JFactory::getDocument();
+		/** @var HtmlDocument $doc */
+		$doc = Factory::getDocument();
 
-		if (!$doc instanceof JDocumentHtml || $doc->getType() !== 'html')
+		if (!$doc instanceof HtmlDocument || $doc->getType() !== 'html')
 		{
 			return;
 		}
 
-		$doc->addScriptOptions($name, JSession::getFormToken());
+		$doc->addScriptOptions($name, Session::getFormToken());
 
 		static::$loaded[__METHOD__][$name] = true;
 	}

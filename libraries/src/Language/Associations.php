@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,6 +10,8 @@ namespace Joomla\CMS\Language;
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\Factory;
+use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Registry\Registry;
 
 /**
@@ -50,13 +52,13 @@ class Associations
 		{
 			$multilanguageAssociations[$queryKey] = array();
 
-			$db = \JFactory::getDbo();
+			$db = Factory::getDbo();
 			$categoriesExtraSql = (($tablename === '#__categories') ? ' AND c2.extension = ' . $db->quote($extension) : '');
 			$query = $db->getQuery(true)
 				->select($db->quoteName('c2.language'))
 				->from($db->quoteName($tablename, 'c'))
 				->join('INNER', $db->quoteName('#__associations', 'a') . ' ON a.id = c.' . $db->quoteName($pk) . ' AND a.context=' . $db->quote($context))
-				->join('INNER', $db->quoteName('#__associations', 'a2') . ' ON a.key = a2.key')
+				->join('INNER', $db->quoteName('#__associations', 'a2') . ' ON ' . $db->quoteName('a.key') . ' = ' . $db->quoteName('a2.key'))
 				->join('INNER', $db->quoteName($tablename, 'c2') . ' ON a2.id = c2.' . $db->quoteName($pk) . $categoriesExtraSql);
 
 			// Use alias field ?
@@ -156,7 +158,7 @@ class Associations
 			// If already tested, don't test again.
 			if (!$tested)
 			{
-				$plugin = \JPluginHelper::getPlugin('system', 'languagefilter');
+				$plugin = PluginHelper::getPlugin('system', 'languagefilter');
 
 				if (!empty($plugin))
 				{

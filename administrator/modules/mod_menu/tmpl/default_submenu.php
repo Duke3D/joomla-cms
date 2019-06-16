@@ -3,66 +3,68 @@
  * @package     Joomla.Administrator
  * @subpackage  mod_menu
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
-use Joomla\CMS\Menu\Node\Separator;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Language\Text;
+
 /**
  * =========================================================================================================
- * IMPORTANT: The scope of this layout file is the `JAdminCssMenu` object and NOT the module context.
+ * IMPORTANT: The scope of this layout file is the `var  \Joomla\Module\Menu\Administrator\Menu\CssMenu` object
+ * and NOT the module context.
  * =========================================================================================================
  */
-/** @var  JAdminCssMenu  $this */
-$current = $this->tree->getCurrent();
+/** @var  \Joomla\Module\Menu\Administrator\Menu\CssMenu  $this */
+$class   = '';
 
 // Build the CSS class suffix
 if (!$this->enabled)
 {
 	$class = ' class="disabled"';
 }
-elseif ($current instanceOf Separator)
+elseif ($current->type == 'separator')
 {
-	$class = $current->get('title') ? ' class="menuitem-group"' : ' class="divider"';
+	$class = $current->title ? ' class="menuitem-group"' : ' class="divider"';
 }
 elseif ($current->hasChildren())
 {
-	if ($current->getLevel() == 1)
+	$class = ' class="dropdown-submenu"';
+
+	if ($current->level == 1)
 	{
-		$class = ' class="dropdown"';
+		$class = ' class="parent"';
 	}
-	elseif ($current->get('class') == 'scrollable-menu')
+	elseif ($current->get('class') === 'scrollable-menu')
 	{
 		$class = ' class="dropdown scrollable-menu"';
 	}
-	else
-	{
-		$class = ' class="dropdown-submenu"';
-	}
+}
+
+// Set the correct aria role and print the item
+if ($current->type == 'separator')
+{
+	echo '<li' . $class . ' role="presentation">';
 }
 else
 {
-	$class = '';
+	echo '<li' . $class . ' role="menuitem">';
 }
 
-// Print the item
-echo '<li' . $class . '>';
-
 // Print a link if it exists
-$linkClass     = array();
-$dataToggle    = '';
-$dropdownCaret = '';
+$linkClass  = [];
+$dataToggle = '';
+$iconClass  = '';
 
 if ($current->hasChildren())
 {
-	$linkClass[] = 'dropdown-toggle';
-	$dataToggle  = ' data-toggle="dropdown"';
+	$linkClass[] = 'has-arrow';
 
-	if ($current->getLevel() == 1)
+	if ($current->level > 2)
 	{
-		$dropdownCaret = ' <span class="caret"></span>';
+		$dataToggle  = ' data-toggle="dropdown"';
 	}
 }
 else
@@ -70,67 +72,55 @@ else
 	$linkClass[] = 'no-dropdown';
 }
 
-if (!($current instanceof Separator) && ($current->getLevel() > 1))
-{
-	$iconClass = $this->tree->getIconClass();
-
-	if (trim($iconClass))
-	{
-		$linkClass[] = $iconClass;
-	}
-}
-
 // Implode out $linkClass for rendering
 $linkClass = ' class="' . implode(' ', $linkClass) . '" ';
 
-// Links: component/url/heading/container
-if ($link = $current->get('link'))
+// Get the menu link
+$link      = $current->get('link');
+
+// Get the menu icon
+$icon      = $this->getIconClass($current);
+$iconClass = ($icon != '' && $current->level == 1) ? '<span class="' . $icon . '" aria-hidden="true"></span>' : '';
+
+if ($link != '' && $current->target != '')
 {
-	$icon = $current->get('icon');
-
-	if ($icon)
-	{
-		if (substr($icon, 0, 6) == 'class:')
-		{
-			$icon = '<span class="' . substr($icon, 6) . '"></span>';
-		}
-		elseif (substr($icon, 0, 6) == 'image:')
-		{
-			$icon = JHtml::_('image', substr($icon, 6), null, null, true);
-		}
-		else
-		{
-			$icon = JHtml::_('image', $icon, null);
-		}
-	}
-
-	$target = $current->get('target') ? 'target="' . $current->get('target') . '"' : '';
-
-	echo '<a' . $linkClass . $dataToggle . ' href="' . $link . '" ' . $target . '>' .
-				JText::_($current->get('title')) . $icon . $dropdownCaret . '</a>';
+	echo "<a" . $linkClass . $dataToggle . " href=\"" . $link . "\" target=\"" . $current->target . "\">"
+		. $iconClass
+		. '<span class="sidebar-item-title">' . Text::_($current->title) . "</span></a>";
 }
-// Separator
+elseif ($link != '')
+{
+	echo "<a" . $linkClass . $dataToggle . " href=\"" . $link . "\">"
+		. $iconClass
+		. '<span class="sidebar-item-title">' . Text::_($current->get('title')) . "</span></a>";
+}
+elseif ($current->title != '' && $current->get('class') !== 'separator')
+{
+	echo "<a" . $linkClass . $dataToggle . ">"
+		. $iconClass
+		. '<span class="sidebar-item-title">' . Text::_($current->get('title')) . "</span></a>";
+}
 else
 {
-	echo '<span>' . JText::_($current->get('title')) . '</span>';
+	echo '<span>' . Text::_($current->get('title')) . '</span>';
 }
 
 // Recurse through children if they exist
 if ($this->enabled && $current->hasChildren())
 {
-	if ($current->getLevel() > 1)
+	if ($current->level > 1)
 	{
 		$id = $current->get('id') ? ' id="menu-' . strtolower($current->get('id')) . '"' : '';
 
-		echo '<ul' . $id . ' class="dropdown-menu menu-scrollable">' . "\n";
+		echo '<ul' . $id . ' class="collapse collapse-level-' . $current->level . '">' . "\n";
 	}
 	else
 	{
-		echo '<ul class="dropdown-menu scroll-menu">' . "\n";
+		echo '<ul id="collapse' . $this->getCounter() . '" class="collapse-level-1 collapse" role="menu" aria-haspopup="true">' . "\n";
 	}
 
 	// WARNING: Do not use direct 'include' or 'require' as it is important to isolate the scope for each call
-	$this->renderSubmenu(__FILE__);
+	$this->renderSubmenu(__FILE__, $current);
 
 	echo "</ul>\n";
 }

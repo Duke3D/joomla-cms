@@ -123,11 +123,6 @@ function getQueryParam($key, $default = null)
 		$value = $_REQUEST[$key];
 	}
 
-	if (get_magic_quotes_gpc() && !is_null($value))
-	{
-		$value = stripslashes($value);
-	}
-
 	return $value;
 }
 
@@ -1222,7 +1217,7 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 						$this->notify($message);
 					}
 					$this->runState = AK_STATE_NOFILE;
-					continue;
+					break;
 			}
 		}
 
@@ -1354,7 +1349,7 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 		if ($directory != $rootDir)
 		{
 			// Is this an unwritable directory?
-			if (!is_writeable($directory))
+			if (!is_writable($directory))
 			{
 				$this->postProcEngine->chmod($directory, 0755);
 			}
@@ -4190,7 +4185,7 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			}
 		}
 
-		$filename = isset($this->fileHeader->realFile) ? $this->fileHeader->realFile : $this->fileHeader->file;
+		$filename = $this->fileHeader->realFile ?? $this->fileHeader->file;
 
 		if (!AKFactory::get('kickstart.setup.dryrun', '0'))
 		{

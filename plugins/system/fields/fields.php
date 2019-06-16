@@ -3,25 +3,25 @@
  * @package     Joomla.Plugin
  * @subpackage  System.Fields
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Form\Form;
-use Joomla\Registry\Registry;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Multilanguage;
-
-JLoader::register('FieldsHelper', JPATH_ADMINISTRATOR . '/components/com_fields/helpers/fields.php');
+use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\Component\Fields\Administrator\Helper\FieldsHelper;
+use Joomla\Registry\Registry;
 
 /**
  * Fields Plugin
  *
  * @since  3.7
  */
-class PlgSystemFields extends JPlugin
+class PlgSystemFields extends CMSPlugin
 {
 	/**
 	 * Load the language file on instantiation.
@@ -46,12 +46,22 @@ class PlgSystemFields extends JPlugin
 	{
 		if (!FieldsHelper::extract($context, $data))
 		{
-			return true;
+			return;
 		}
 
 		// Loop over all fields
 		foreach ($form->getGroup('com_fields') as $field)
 		{
+			if ($field->disabled === true)
+			{
+				/**
+				 * Disabled fields should NEVER be added to the request as
+				 * they should NEVER be added by the browser anyway so nothing to check against
+				 * as "disabled" means no interaction at all.
+				 */
+				continue;
+			}
+
 			// Make sure the data object has an entry
 			if (isset($data->com_fields[$field->fieldname]))
 			{
@@ -84,7 +94,7 @@ class PlgSystemFields extends JPlugin
 		}
 
 		// Create correct context for category
-		if ($context == 'com_categories.category')
+		if ($context === 'com_categories.category')
 		{
 			$context = $item->extension . '.categories';
 
@@ -112,7 +122,7 @@ class PlgSystemFields extends JPlugin
 		}
 
 		// Loading the model
-		$model = JModelLegacy::getInstance('Field', 'FieldsModel', array('ignore_request' => true));
+		$model = new \Joomla\Component\Fields\Administrator\Model\FieldModel(array('ignore_request' => true));
 
 		// Loop over the fields
 		foreach ($fields as $field)
@@ -168,9 +178,9 @@ class PlgSystemFields extends JPlugin
 			return true;
 		}
 
-		$user = JFactory::getUser($userData['id']);
+		$user = Factory::getUser($userData['id']);
 
-		$task = JFactory::getApplication()->input->getCmd('task');
+		$task = Factory::getApplication()->input->getCmd('task');
 
 		// Skip fields save when we activate a user, because we will lose the saved data
 		if (in_array($task, array('activate', 'block', 'unblock')))
@@ -205,10 +215,7 @@ class PlgSystemFields extends JPlugin
 
 		$context = $parts[0] . '.' . $parts[1];
 
-		JLoader::import('joomla.application.component.model');
-		JModelLegacy::addIncludePath(JPATH_ADMINISTRATOR . '/components/com_fields/models', 'FieldsModel');
-
-		$model = JModelLegacy::getInstance('Field', 'FieldsModel', array('ignore_request' => true));
+		$model = new \Joomla\Component\Fields\Administrator\Model\FieldModel(array('ignore_request' => true));
 		$model->cleanupValues($context, $item->id);
 
 		return true;
@@ -243,7 +250,7 @@ class PlgSystemFields extends JPlugin
 	 *
 	 * @since   3.7.0
 	 */
-	public function onContentPrepareForm(JForm $form, $data)
+	public function onContentPrepareForm(Form $form, $data)
 	{
 		$context = $form->getName();
 
@@ -271,7 +278,7 @@ class PlgSystemFields extends JPlugin
 			return true;
 		}
 
-		$input = JFactory::getApplication()->input;
+		$input = Factory::getApplication()->input;
 
 		// If we are on the save command we need the actual data
 		$jformData = $input->get('jform', array(), 'array');
@@ -364,7 +371,7 @@ class PlgSystemFields extends JPlugin
 		}
 
 		// If we have a category, set the catid field to fetch only the fields which belong to it
-		if ($parts[1] == 'categories' && !isset($item->catid))
+		if ($parts[1] === 'categories' && !isset($item->catid))
 		{
 			$item->catid = $item->id;
 		}
@@ -391,13 +398,13 @@ class PlgSystemFields extends JPlugin
 		{
 			$app = Factory::getApplication();
 
-			if ($app->isClient('site') && Multilanguage::isEnabled() && isset($item->language) && $item->language == '*')
+			if ($app->isClient('site') && Multilanguage::isEnabled() && isset($item->language) && $item->language === '*')
 			{
 				$lang = $app->getLanguage()->getTag();
 
 				foreach ($fields as $key => $field)
 				{
-					if ($field->language == '*' || $field->language == $lang)
+					if ($field->language === '*' || $field->language == $lang)
 					{
 						continue;
 					}

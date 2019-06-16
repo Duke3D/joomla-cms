@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -11,6 +11,8 @@ namespace Joomla\CMS\Cache\Storage;
 defined('JPATH_PLATFORM') or die;
 
 use Joomla\CMS\Cache\CacheStorage;
+use Joomla\CMS\Cache\Exception\CacheConnectingException;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Log\Log;
 
 /**
@@ -68,15 +70,15 @@ class RedisStorage extends CacheStorage
 			return false;
 		}
 
-		$config = \JFactory::getConfig();
+		$app = Factory::getApplication();
 
-		$this->_persistent = $config->get('redis_persist', true);
+		$this->_persistent = $app->get('redis_persist', true);
 
 		$server = array(
-			'host' => $config->get('redis_server_host', 'localhost'),
-			'port' => $config->get('redis_server_port', 6379),
-			'auth' => $config->get('redis_server_auth', null),
-			'db'   => (int) $config->get('redis_server_db', null),
+			'host' => $app->get('redis_server_host', 'localhost'),
+			'port' => $app->get('redis_server_port', 6379),
+			'auth' => $app->get('redis_server_auth', null),
+			'db'   => (int) $app->get('redis_server_db', null),
 		);
 
 		// If you are trying to connect to a socket file, ignore the supplied port
@@ -107,13 +109,7 @@ class RedisStorage extends CacheStorage
 		{
 			static::$_redis = null;
 
-			// Because the application instance may not be available on cli script, use it only if needed
-			if (\JFactory::getApplication()->isClient('administrator'))
-			{
-				\JError::raiseWarning(500, 'Redis connection failed');
-			}
-
-			return false;
+			throw new CacheConnectingException('Redis connection failed', 500);
 		}
 
 		try
@@ -130,13 +126,7 @@ class RedisStorage extends CacheStorage
 		{
 			static::$_redis = null;
 
-			// Because the application instance may not be available on cli script, use it only if needed
-			if (\JFactory::getApplication()->isClient('administrator'))
-			{
-				\JError::raiseWarning(500, 'Redis authentication failed');
-			}
-
-			return false;
+			throw new CacheConnectingException('Redis authentication failed', 500);
 		}
 
 		$select = static::$_redis->select($server['db']);
@@ -145,13 +135,7 @@ class RedisStorage extends CacheStorage
 		{
 			static::$_redis = null;
 
-			// Because the application instance may not be available on cli script, use it only if needed
-			if (\JFactory::getApplication()->isClient('administrator'))
-			{
-				\JError::raiseWarning(500, 'Redis failed to select database');
-			}
-
-			return false;
+			throw new CacheConnectingException('Redis failed to select database', 500);
 		}
 
 		try
@@ -162,13 +146,7 @@ class RedisStorage extends CacheStorage
 		{
 			static::$_redis = null;
 
-			// Because the application instance may not be available on cli script, use it only if needed
-			if (\JFactory::getApplication()->isClient('administrator'))
-			{
-				\JError::raiseWarning(500, 'Redis ping failed');
-			}
-
-			return false;
+			throw new CacheConnectingException('Redis ping failed', 500);
 		}
 
 		return static::$_redis;

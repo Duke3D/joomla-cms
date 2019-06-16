@@ -3,7 +3,7 @@
 	<name>plg_user_profile</name>
 	<author>Joomla! Project</author>
 	<creationDate>January 2008</creationDate>
-	<copyright>(C) 2005 - 2018 Open Source Matters. All rights reserved.</copyright>
+	<copyright>(C) 2005 - 2019 Open Source Matters. All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>admin@joomla.org</authorEmail>
 	<authorUrl>www.joomla.org</authorUrl>
@@ -20,7 +20,7 @@
 	</languages>
 	<config>
 		<fields name="params">
-			<fieldset name="basic" addfieldpath="/administrator/components/com_content/models/fields">
+			<fieldset name="basic" addfieldprefix="Joomla\Component\Content\Administrator\Field">
 				<field
 					name="register-require-user"
 					type="spacer"
@@ -32,7 +32,6 @@
 					name="register-require_address1"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_ADDRESS1_LABEL"
-					description="PLG_USER_PROFILE_FIELD_ADDRESS1_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -45,7 +44,6 @@
 					name="register-require_address2"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_ADDRESS2_LABEL"
-					description="PLG_USER_PROFILE_FIELD_ADDRESS2_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -58,7 +56,6 @@
 					name="register-require_city"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_CITY_LABEL"
-					description="PLG_USER_PROFILE_FIELD_CITY_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -71,7 +68,6 @@
 					name="register-require_region"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_REGION_LABEL"
-					description="PLG_USER_PROFILE_FIELD_REGION_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -84,7 +80,6 @@
 					name="register-require_country"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_COUNTRY_LABEL"
-					description="PLG_USER_PROFILE_FIELD_COUNTRY_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -97,7 +92,6 @@
 					name="register-require_postal_code"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_POSTAL_CODE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_POSTAL_CODE_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -110,7 +104,6 @@
 					name="register-require_phone"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_PHONE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_PHONE_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -123,7 +116,6 @@
 					name="register-require_website"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_WEB_SITE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_WEB_SITE_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -136,7 +128,6 @@
 					name="register-require_favoritebook"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_FAVORITE_BOOK_LABEL"
-					description="PLG_USER_PROFILE_FIELD_FAVORITE_BOOK_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -149,7 +140,6 @@
 					name="register-require_aboutme"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_ABOUT_ME_LABEL"
-					description="PLG_USER_PROFILE_FIELD_ABOUT_ME_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -162,7 +152,6 @@
 					name="register-require_tos"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_TOS_LABEL"
-					description="PLG_USER_PROFILE_FIELD_TOS_DESC"
 					default="0"
 					filter="integer"
 					>
@@ -174,7 +163,6 @@
 					name="register_tos_article"
 					type="modal_article"
 					label="PLG_USER_PROFILE_FIELD_TOS_ARTICLE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_TOS_ARTICLE_DESC"
 					select="true"
 					new="true"
 					edit="true"
@@ -186,7 +174,6 @@
 					name="register-require_dob"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_DOB_LABEL"
-					description="PLG_USER_PROFILE_FIELD_DOB_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -212,7 +199,6 @@
 					name="profile-require_address1"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_ADDRESS1_LABEL"
-					description="PLG_USER_PROFILE_FIELD_ADDRESS1_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -225,7 +211,6 @@
 					name="profile-require_address2"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_ADDRESS2_LABEL"
-					description="PLG_USER_PROFILE_FIELD_ADDRESS2_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -238,7 +223,6 @@
 					name="profile-require_city"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_CITY_LABEL"
-					description="PLG_USER_PROFILE_FIELD_CITY_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -251,7 +235,6 @@
 					name="profile-require_region"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_REGION_LABEL"
-					description="PLG_USER_PROFILE_FIELD_REGION_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -264,7 +247,6 @@
 					name="profile-require_country"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_COUNTRY_LABEL"
-					description="PLG_USER_PROFILE_FIELD_COUNTRY_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -277,7 +259,6 @@
 					name="profile-require_postal_code"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_POSTAL_CODE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_POSTAL_CODE_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -290,7 +271,6 @@
 					name="profile-require_phone"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_PHONE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_PHONE_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -303,7 +283,6 @@
 					name="profile-require_website"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_WEB_SITE_LABEL"
-					description="PLG_USER_PROFILE_FIELD_WEB_SITE_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -316,7 +295,6 @@
 					name="profile-require_favoritebook"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_FAVORITE_BOOK_LABEL"
-					description="PLG_USER_PROFILE_FIELD_FAVORITE_BOOK_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -329,7 +307,6 @@
 					name="profile-require_aboutme"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_ABOUT_ME_LABEL"
-					description="PLG_USER_PROFILE_FIELD_ABOUT_ME_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -342,7 +319,6 @@
 					name="profile-require_dob"
 					type="list"
 					label="PLG_USER_PROFILE_FIELD_DOB_LABEL"
-					description="PLG_USER_PROFILE_FIELD_DOB_DESC"
 					default="1"
 					filter="integer"
 					>

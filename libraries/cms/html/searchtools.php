@@ -3,12 +3,15 @@
  * @package     Joomla.Libraries
  * @subpackage  HTML
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\Registry\Registry;
 
 /**
@@ -23,34 +26,6 @@ abstract class JHtmlSearchtools
 	 * @since  3.2
 	 */
 	protected static $loaded = array();
-
-	/**
-	 * Load the main Searchtools libraries
-	 *
-	 * @return  void
-	 *
-	 * @since   3.2
-	 */
-	public static function main()
-	{
-		// Only load once
-		if (empty(static::$loaded[__METHOD__]))
-		{
-			// Requires jQuery but allows to skip its loading
-			if ($loadJquery = (!isset($options['loadJquery']) || $options['loadJquery'] != 0))
-			{
-				JHtml::_('jquery.framework');
-			}
-
-			// Load the jQuery plugin && CSS
-			JHtml::_('script', 'jui/jquery.searchtools.min.js', array('version' => 'auto', 'relative' => true));
-			JHtml::_('stylesheet', 'jui/jquery.searchtools.css', array('version' => 'auto', 'relative' => true));
-
-			static::$loaded[__METHOD__] = true;
-		}
-
-		return;
-	}
 
 	/**
 	 * Load searchtools for a specific form
@@ -69,31 +44,19 @@ abstract class JHtmlSearchtools
 		// Only load once
 		if (!isset(static::$loaded[__METHOD__][$sig]))
 		{
-			// Include Bootstrap framework
-			static::main();
-
 			// Add the form selector to the search tools options
 			$options['formSelector'] = $selector;
 
 			// Generate options with default values
 			$options = static::optionsToRegistry($options);
 
-			$doc = JFactory::getDocument();
-			$script = "
-				(function($){
-					$(document).ready(function() {
-						$('" . $selector . "').searchtools(
-							" . $options->toString() . "
-						);
-					});
-				})(jQuery);
-			";
-			$doc->addScriptDeclaration($script);
+			// Load the script && css files
+			Factory::getApplication()->getDocument()->getWebAssetManager()->enableAsset('searchtools');
+
+			Factory::getDocument()->addScriptOptions('searchtools', $options);
 
 			static::$loaded[__METHOD__][$sig] = true;
 		}
-
-		return;
 	}
 
 	/**
@@ -162,6 +125,6 @@ abstract class JHtmlSearchtools
 		$data->icon      = $icon;
 		$data->formName  = $formName;
 
-		return JLayoutHelper::render('joomla.searchtools.grid.sort', $data);
+		return LayoutHelper::render('joomla.searchtools.grid.sort', $data);
 	}
 }

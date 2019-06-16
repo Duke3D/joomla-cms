@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -11,12 +11,13 @@ namespace Joomla\CMS\Cache;
 defined('JPATH_PLATFORM') or die;
 
 use Joomla\CMS\Cache\Exception\UnsupportedCacheException;
-use Joomla\CMS\Log\Log;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\Path;
 
 /**
  * Abstract cache storage handler
  *
- * @since  11.1
+ * @since  1.7.0
  * @note   As of 4.0 this class will be abstract
  */
 class CacheStorage
@@ -25,7 +26,7 @@ class CacheStorage
 	 * The raw object name
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	protected $rawname;
 
@@ -33,7 +34,7 @@ class CacheStorage
 	 * Time that the cache storage handler was instantiated
 	 *
 	 * @var    integer
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $_now;
 
@@ -41,7 +42,7 @@ class CacheStorage
 	 * Cache lifetime
 	 *
 	 * @var    integer
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $_lifetime;
 
@@ -49,7 +50,7 @@ class CacheStorage
 	 * Flag if locking is enabled
 	 *
 	 * @var    boolean
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $_locking;
 
@@ -57,7 +58,7 @@ class CacheStorage
 	 * Language code
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $_language;
 
@@ -65,7 +66,7 @@ class CacheStorage
 	 * Application name
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $_application;
 
@@ -73,7 +74,7 @@ class CacheStorage
 	 * Object hash
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $_hash;
 
@@ -82,18 +83,18 @@ class CacheStorage
 	 *
 	 * @param   array  $options  Optional parameters
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function __construct($options = array())
 	{
-		$config = \JFactory::getConfig();
+		$app = Factory::getApplication();
 
-		$this->_hash        = md5($config->get('secret'));
-		$this->_application = (isset($options['application'])) ? $options['application'] : null;
-		$this->_language    = (isset($options['language'])) ? $options['language'] : 'en-GB';
-		$this->_locking     = (isset($options['locking'])) ? $options['locking'] : true;
-		$this->_lifetime    = (isset($options['lifetime'])) ? $options['lifetime'] * 60 : $config->get('cachetime') * 60;
-		$this->_now         = (isset($options['now'])) ? $options['now'] : time();
+		$this->_hash        = md5($app->get('secret'));
+		$this->_application = $options['application'] ?? null;
+		$this->_language    = $options['language'] ?? 'en-GB';
+		$this->_locking     = $options['locking'] ?? true;
+		$this->_lifetime    = ($options['lifetime'] ?? $app->get('cachetime')) * 60;
+		$this->_now         = $options['now'] ?? time();
 
 		// Set time threshold value.  If the lifetime is not set, default to 60 (0 is BAD)
 		// _threshold is now available ONLY as a legacy (it's deprecated).  It's no longer used in the core.
@@ -116,7 +117,7 @@ class CacheStorage
 	 *
 	 * @return  CacheStorage
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @throws  \UnexpectedValueException
 	 * @throws  UnsupportedCacheException
 	 */
@@ -124,12 +125,9 @@ class CacheStorage
 	{
 		static $now = null;
 
-		// @deprecated  4.0  This class path is autoloaded, manual inclusion is no longer necessary
-		self::addIncludePath(__DIR__ . '/Storage');
-
 		if (!isset($handler))
 		{
-			$handler = \JFactory::getConfig()->get('cache_handler');
+			$handler = Factory::getApplication()->get('cache_handler');
 
 			if (empty($handler))
 			{
@@ -158,9 +156,7 @@ class CacheStorage
 		if (!class_exists($class))
 		{
 			// Search for the class file in the JCacheStorage include paths.
-			\JLoader::import('joomla.filesystem.path');
-
-			$path = \JPath::find(self::addIncludePath(), strtolower($handler) . '.php');
+			$path = Path::find(self::addIncludePath(), strtolower($handler) . '.php');
 
 			if ($path === false)
 			{
@@ -209,7 +205,7 @@ class CacheStorage
 	 *
 	 * @return  mixed  Boolean false on failure or a cached data object
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function get($id, $group, $checkTime = true)
 	{
@@ -221,7 +217,7 @@ class CacheStorage
 	 *
 	 * @return  mixed  Boolean false on failure or a cached data object
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function getAll()
 	{
@@ -237,7 +233,7 @@ class CacheStorage
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function store($id, $group, $data)
 	{
@@ -252,7 +248,7 @@ class CacheStorage
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function remove($id, $group)
 	{
@@ -270,7 +266,7 @@ class CacheStorage
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function clean($group, $mode = null)
 	{
@@ -294,7 +290,7 @@ class CacheStorage
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function gc()
 	{
@@ -306,26 +302,11 @@ class CacheStorage
 	 *
 	 * @return  boolean
 	 *
-	 * @since   12.1
+	 * @since   3.0.0
 	 */
 	public static function isSupported()
 	{
 		return true;
-	}
-
-	/**
-	 * Test to see if the storage handler is available.
-	 *
-	 * @return  boolean
-	 *
-	 * @since   11.1
-	 * @deprecated  12.3 (Platform) & 4.0 (CMS)
-	 */
-	public static function test()
-	{
-		Log::add(__METHOD__ . '() is deprecated. Use CacheStorage::isSupported() instead.', Log::WARNING, 'deprecated');
-
-		return static::isSupported();
 	}
 
 	/**
@@ -337,7 +318,7 @@ class CacheStorage
 	 *
 	 * @return  mixed  Boolean false if locking failed or an object containing properties lock and locklooped
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function lock($id, $group, $locktime)
 	{
@@ -352,7 +333,7 @@ class CacheStorage
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function unlock($id, $group = null)
 	{
@@ -367,7 +348,7 @@ class CacheStorage
 	 *
 	 * @return  string
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	protected function _getCacheId($id, $group)
 	{
@@ -384,7 +365,7 @@ class CacheStorage
 	 *
 	 * @return  array  An array with directory elements
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public static function addIncludePath($path = '')
 	{
@@ -397,8 +378,7 @@ class CacheStorage
 
 		if (!empty($path) && !in_array($path, $paths))
 		{
-			\JLoader::import('joomla.filesystem.path');
-			array_unshift($paths, \JPath::clean($path));
+			array_unshift($paths, Path::clean($path));
 		}
 
 		return $paths;

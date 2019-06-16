@@ -2,7 +2,7 @@
 /**
  * @package    Joomla.Build
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -12,6 +12,7 @@ const _JEXEC = 1;
 // Import namespaced classes
 use Joomla\CMS\Application\CliApplication;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Http\HttpFactory;
 use Joomla\CMS\Version;
 use Joomla\Registry\Registry;
 
@@ -27,11 +28,8 @@ if (!defined('_JDEFINES'))
 	require_once JPATH_BASE . '/includes/defines.php';
 }
 
-// Get the Platform without legacy libraries.
-require_once JPATH_LIBRARIES . '/import.php';
-
-// Bootstrap the CMS libraries.
-require_once JPATH_LIBRARIES . '/cms.php';
+// Get the framework.
+require_once JPATH_LIBRARIES . '/bootstrap.php';
 
 // Configure error reporting to maximum for CLI output.
 error_reporting(E_ALL);
@@ -39,7 +37,6 @@ ini_set('display_errors', 1);
 
 // Load the admin en-GB.ini language file to get the JHELP language keys
 Factory::getLanguage()->load('joomla', JPATH_ADMINISTRATOR, null, false, false);
-
 
 /**
  * Utility CLI to retrieve the list of help screens from the docs wiki and create an index for the admin help view.
@@ -57,15 +54,28 @@ class MediawikiCli extends CliApplication
 	 */
 	public function doExecute()
 	{
+		if (!class_exists(\Joomla\Mediawiki\Http::class))
+		{
+			$this->out(
+				'The `joomla/mediawiki` package is not installed.  To use this script, you must run `composer install` to install development'
+				. ' dependencies not tracked in this repo.'
+			);
+
+			return;
+		}
+
 		// Get the version data for the script
 		$minorVersion = Version::MAJOR_VERSION . '.' . Version::MINOR_VERSION;
-		$namespace    = 'Help' . $minorVersion . ':';
+		$namespace    = 'Help' . str_replace('.', '', $minorVersion) . ':';
+
+		// Set up HTTP driver for MediaWiki
+		$http = new \Joomla\Mediawiki\Http([], HttpFactory::getAvailableDriver());
 
 		// Set up options for JMediawiki
 		$options = new Registry;
 		$options->set('api.url', 'https://docs.joomla.org');
 
-		$mediawiki = new JMediawiki($options);
+		$mediawiki = new Joomla\Mediawiki\Mediawiki($options, $http);
 
 		// Get the category members (local hack)
 		$this->out('Fetching data from docs wiki', true);
@@ -206,5 +216,22 @@ class MediawikiCli extends CliApplication
 	}
 }
 
-// Instantiate the application and execute it
-CliApplication::getInstance('MediawikiCli')->execute();
+// Set up the container
+Factory::getContainer()->share(
+	'MediawikiCli',
+	function (\Joomla\DI\Container $container)
+	{
+		return new MediawikiCli(
+			null,
+			null,
+			null,
+			null,
+			$container->get(\Joomla\Event\DispatcherInterface::class),
+			$container
+		);
+	},
+	true
+);
+$app = Factory::getContainer()->get('MediawikiCli');
+Factory::$application = $app;
+$app->execute();

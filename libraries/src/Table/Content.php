@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -13,33 +13,30 @@ defined('JPATH_PLATFORM') or die;
 use Joomla\CMS\Access\Access;
 use Joomla\CMS\Access\Rules;
 use Joomla\CMS\Application\ApplicationHelper;
-use Joomla\CMS\Table\Observer\Tags;
-use Joomla\CMS\Table\Observer\ContentHistory as ContentHistoryObserver;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
+use Joomla\Database\DatabaseDriver;
 use Joomla\Registry\Registry;
 use Joomla\String\StringHelper;
 
 /**
  * Content table
  *
- * @since       1.5
- * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
+ * @since  1.5
  */
 class Content extends Table
 {
 	/**
 	 * Constructor
 	 *
-	 * @param   \JDatabaseDriver  $db  A database connector object
+	 * @param   DatabaseDriver  $db  A database connector object
 	 *
 	 * @since   1.5
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
-	public function __construct(\JDatabaseDriver $db)
+	public function __construct(DatabaseDriver $db)
 	{
+		$this->typeAlias = 'com_content.article';
 		parent::__construct('#__content', 'id', $db);
-
-		Tags::createObserver($this, array('typeAlias' => 'com_content.article'));
-		ContentHistoryObserver::createObserver($this, array('typeAlias' => 'com_content.article'));
 
 		// Set the alias since the column is called state
 		$this->setColumnAlias('published', 'state');
@@ -53,7 +50,6 @@ class Content extends Table
 	 * @return  string
 	 *
 	 * @since   1.6
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
 	protected function _getAssetName()
 	{
@@ -68,7 +64,6 @@ class Content extends Table
 	 * @return  string
 	 *
 	 * @since   1.6
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
 	protected function _getAssetTitle()
 	{
@@ -84,7 +79,6 @@ class Content extends Table
 	 * @return  integer
 	 *
 	 * @since   1.6
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
 	protected function _getAssetParentId(Table $table = null, $id = null)
 	{
@@ -130,7 +124,6 @@ class Content extends Table
 	 *
 	 * @see     Table::bind()
 	 * @since   1.6
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
 	public function bind($array, $ignore = '')
 	{
@@ -180,13 +173,23 @@ class Content extends Table
 	 *
 	 * @see     Table::check()
 	 * @since   1.5
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		if (trim($this->title) == '')
 		{
-			$this->setError(\JText::_('COM_CONTENT_WARNING_PROVIDE_VALID_NAME'));
+			$this->setError(Text::_('COM_CONTENT_WARNING_PROVIDE_VALID_NAME'));
 
 			return false;
 		}
@@ -200,7 +203,7 @@ class Content extends Table
 
 		if (trim(str_replace('-', '', $this->alias)) == '')
 		{
-			$this->alias = \JFactory::getDate()->format('Y-m-d-H-i-s');
+			$this->alias = Factory::getDate()->format('Y-m-d-H-i-s');
 		}
 
 		if (trim(str_replace('&nbsp;', '', $this->fulltext)) == '')
@@ -237,6 +240,21 @@ class Content extends Table
 			{
 				$this->metadata = '{}';
 			}
+
+			// Hits must be zero on a new item
+			$this->hits = 0;
+		}
+
+		// Set publish_up to null date if not set
+		if (!$this->publish_up)
+		{
+			$this->publish_up = $this->_db->getNullDate();
+		}
+
+		// Set publish_down to null date if not set
+		if (!$this->publish_down)
+		{
+			$this->publish_down = $this->_db->getNullDate();
 		}
 
 		// Check the publish down date is not earlier than publish up.
@@ -246,6 +264,12 @@ class Content extends Table
 			$temp = $this->publish_up;
 			$this->publish_up = $this->publish_down;
 			$this->publish_down = $temp;
+		}
+
+		// Set modified to null date if not set
+		if (!$this->modified)
+		{
+			$this->modified = $this->_db->getNullDate();
 		}
 
 		// Clean up keywords -- eliminate extra spaces between phrases
@@ -282,30 +306,6 @@ class Content extends Table
 	}
 
 	/**
-	 * Gets the default asset values for a component.
-	 *
-	 * @param   string  $component  The component asset name to search for
-	 *
-	 * @return  Rules  The Rules object for the asset
-	 *
-	 * @since   3.4
-	 * @deprecated  3.4 Class will be removed upon completion of transition to UCM
-	 */
-	protected function getDefaultAssetValues($component)
-	{
-		// Need to find the asset id by the name of the component.
-		$db = $this->getDbo();
-		$query = $db->getQuery(true)
-			->select($db->quoteName('id'))
-			->from($db->quoteName('#__assets'))
-			->where($db->quoteName('name') . ' = ' . $db->quote($component));
-		$db->setQuery($query);
-		$assetId = (int) $db->loadResult();
-
-		return Access::getAssetRules($assetId);
-	}
-
-	/**
 	 * Overrides Table::store to set modified data and user id.
 	 *
 	 * @param   boolean  $updateNulls  True to update fields even if they are null.
@@ -313,19 +313,17 @@ class Content extends Table
 	 * @return  boolean  True on success.
 	 *
 	 * @since   1.6
-	 * @deprecated  3.1.4 Class will be removed upon completion of transition to UCM
 	 */
 	public function store($updateNulls = false)
 	{
-		$date = \JFactory::getDate();
-		$user = \JFactory::getUser();
-
-		$this->modified = $date->toSql();
+		$date = Factory::getDate();
+		$user = Factory::getUser();
 
 		if ($this->id)
 		{
 			// Existing item
 			$this->modified_by = $user->get('id');
+			$this->modified    = $date->toSql();
 		}
 		else
 		{
@@ -347,7 +345,7 @@ class Content extends Table
 
 		if ($table->load(array('alias' => $this->alias, 'catid' => $this->catid)) && ($table->id != $this->id || $this->id == 0))
 		{
-			$this->setError(\JText::_('JLIB_DATABASE_ERROR_ARTICLE_UNIQUE_ALIAS'));
+			$this->setError(Text::_('JLIB_DATABASE_ERROR_ARTICLE_UNIQUE_ALIAS'));
 
 			return false;
 		}

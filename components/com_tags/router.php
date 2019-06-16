@@ -3,12 +3,15 @@
  * @package     Joomla.Site
  * @subpackage  com_tags
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Component\Router\RouterBase;
+use Joomla\CMS\Factory;
 use Joomla\Utilities\ArrayHelper;
 
 /**
@@ -16,7 +19,7 @@ use Joomla\Utilities\ArrayHelper;
  *
  * @since  3.3
  */
-class TagsRouter extends JComponentRouterBase
+class TagsRouter extends RouterBase
 {
 	/**
 	 * Build the route for the com_tags component
@@ -32,7 +35,7 @@ class TagsRouter extends JComponentRouterBase
 		$segments = array();
 
 		// Get a menu item based on Itemid or currently active
-		$params = JComponentHelper::getParams('com_tags');
+		$params = ComponentHelper::getParams('com_tags');
 
 		// We need a menu item.  Either the one specified in the query, or the current active one if none specified
 		if (empty($query['Itemid']))
@@ -145,12 +148,15 @@ class TagsRouter extends JComponentRouterBase
 		{
 			$vars['view'] = $segments[0];
 			$vars['id']   = $this->fixSegment($segments[$count - 1]);
+			unset($segments[0]);
+			unset($segments[$count - 1]);
 
 			return $vars;
 		}
 
 		$vars['id'] = $this->fixSegment($segments[0]);
 		$vars['view'] = 'tag';
+		unset($segments[0]);
 
 		return $vars;
 	}
@@ -166,7 +172,7 @@ class TagsRouter extends JComponentRouterBase
 	 */
 	protected function fixSegment($segment)
 	{
-		$db = JFactory::getDbo();
+		$db = Factory::getDbo();
 
 		// Try to find tag id
 		$alias = str_replace(':', '-', $segment);
@@ -185,36 +191,4 @@ class TagsRouter extends JComponentRouterBase
 
 		return $segment;
 	}
-}
-
-/**
- * Tags router functions. These functions are proxys for the new router interface or old SEF extensions.
- *
- * @param   array  &$query  An array of URL arguments.
- *
- * @return array
- *
- * @deprecated  4.0  Use Class based routers instead
- */
-function tagsBuildRoute(&$query)
-{
-	$router = new TagsRouter;
-
-	return $router->build($query);
-}
-
-/**
- * Parse the segments of a URL. These functions are proxys for the new router interface or old SEF extensions.
- *
- * @param   array  $segments  The segments of the URL to parse.
- *
- * @return  array  The URL attributes to be used by the application.
- *
- * @deprecated  4.0  Use Class based routers instead
- */
-function tagsParseRoute($segments)
-{
-	$router = new TagsRouter;
-
-	return $router->parse($segments);
 }

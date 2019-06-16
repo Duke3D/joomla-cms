@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -13,15 +13,12 @@ defined('JPATH_PLATFORM') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Table\Table;
 
-\JLoader::import('joomla.filesystem.file');
-\JLoader::import('joomla.filesystem.folder');
-\JLoader::import('joomla.filesystem.path');
 \JLoader::import('joomla.base.adapter');
 
 /**
  * Updater Class
  *
- * @since  11.1
+ * @since  1.7.0
  */
 class Updater extends \JAdapter
 {
@@ -67,7 +64,7 @@ class Updater extends \JAdapter
 
 	/**
 	 * @var    Updater  Updater instance container.
-	 * @since  11.3
+	 * @since  1.7.3
 	 */
 	protected static $instance;
 
@@ -91,13 +88,13 @@ class Updater extends \JAdapter
 	 *
 	 * @return  Updater  An installer object
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public static function getInstance()
 	{
 		if (!isset(self::$instance))
 		{
-			self::$instance = new Updater;
+			self::$instance = new static;
 		}
 
 		return self::$instance;
@@ -116,7 +113,7 @@ class Updater extends \JAdapter
 	 *
 	 * @return  boolean True if there are updates
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function findUpdates($eid = 0, $cacheTimeout = 0, $minimum_stability = self::STABILITY_STABLE, $includeCurrent = false)
 	{
@@ -160,7 +157,7 @@ class Updater extends \JAdapter
 			{
 				$retval = true;
 
-				/** @var \JTableUpdate $update */
+				/** @var \Joomla\CMS\Table\Update $update */
 				foreach ($updateObjects as $update)
 				{
 					$update->check();
@@ -173,31 +170,6 @@ class Updater extends \JAdapter
 		}
 
 		return $retval;
-	}
-
-	/**
-	 * Finds an update for an extension
-	 *
-	 * @param   integer  $id  Id of the extension
-	 *
-	 * @return  mixed
-	 *
-	 * @since   3.6.0
-	 *
-	 * @deprecated  4.0  No replacement.
-	 */
-	public function update($id)
-	{
-		$updaterow = Table::getInstance('update');
-		$updaterow->load($id);
-		$update = new Update;
-
-		if ($update->loadFromXml($updaterow->detailsurl))
-		{
-			return $update->install();
-		}
-
-		return false;
 	}
 
 	/**
@@ -308,15 +280,15 @@ class Updater extends \JAdapter
 
 			if (array_key_exists('updates', $update_result) && count($update_result['updates']))
 			{
-				/** @var \JTableUpdate $current_update */
+				/** @var \Joomla\CMS\Table\Update $current_update */
 				foreach ($update_result['updates'] as $current_update)
 				{
 					$current_update->extra_query = $updateSite['extra_query'];
 
-					/** @var \JTableUpdate $update */
+					/** @var \Joomla\CMS\Table\Update $update */
 					$update = Table::getInstance('update');
 
-					/** @var \JTableExtension $extension */
+					/** @var \Joomla\CMS\Table\Extension $extension */
 					$extension = Table::getInstance('extension');
 
 					$uid = $update
@@ -400,10 +372,10 @@ class Updater extends \JAdapter
 			$subQuery = $db->getQuery(true)
 				->select('update_site_id')
 				->from('#__update_sites')
-				->where($db->qn('last_check_timestamp') . ' IS NULL', 'OR')
-				->where($db->qn('last_check_timestamp') . ' <= ' . $db->q($timestamp), 'OR');
+				->where($db->quoteName('last_check_timestamp') . ' IS NULL', 'OR')
+				->where($db->quoteName('last_check_timestamp') . ' <= ' . $db->quote($timestamp), 'OR');
 
-			$query->where($db->qn('update_site_id') . ' IN (' . $subQuery . ')');
+			$query->where($db->quoteName('update_site_id') . ' IN (' . $subQuery . ')');
 		}
 
 		$retVal = $db->setQuery($query)->loadColumn(0);

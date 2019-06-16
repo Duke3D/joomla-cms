@@ -3,12 +3,13 @@
 	<name>mod_articles_popular</name>
 	<author>Joomla! Project</author>
 	<creationDate>July 2006</creationDate>
-	<copyright>Copyright (C) 2005 - 2018 Open Source Matters. All rights reserved.</copyright>
+	<copyright>Copyright (C) 2005 - 2019 Open Source Matters. All rights reserved.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 	<authorEmail>admin@joomla.org</authorEmail>
 	<authorUrl>www.joomla.org</authorUrl>
 	<version>3.0.0</version>
 	<description>MOD_POPULAR_XML_DESCRIPTION</description>
+	<namespace>Joomla\Module\ArticlesPopular</namespace>
 	<files>
 		<filename module="mod_articles_popular">mod_articles_popular.php</filename>
 		<folder>tmpl</folder>
@@ -26,7 +27,6 @@
 					name="catid"
 					type="category"
 					label="JCATEGORY"
-					description="MOD_POPULAR_FIELD_CATEGORY_DESC"
 					extension="com_content"
 					multiple="true"
 					filter="int_array"
@@ -36,7 +36,6 @@
 					name="count"
 					type="number"
 					label="MOD_POPULAR_FIELD_COUNT_LABEL"
-					description="MOD_POPULAR_FIELD_COUNT_DESC"
 					default="5"
 					filter="integer"
 				/>
@@ -44,14 +43,13 @@
 				<field
 					name="show_front"
 					type="radio"
+					class="switcher"
 					label="MOD_POPULAR_FIELD_FEATURED_LABEL"
-					description="MOD_POPULAR_FIELD_FEATURED_DESC"
-					class="btn-group btn-group-yesno"
 					default="1"
 					filter="integer"
 					>
-					<option value="1">JSHOW</option>
 					<option value="0">JHIDE</option>
+					<option value="1">JSHOW</option>
 				</field>
 
 				<field
@@ -64,7 +62,6 @@
 					name="date_filtering"
 					type="list"
 					label="MOD_POPULAR_FIELD_DATEFILTERING_LABEL"
-					description="MOD_POPULAR_FIELD_DATEFILTERING_DESC"
 					default="off"
 					>
 					<option value="off">MOD_POPULAR_OPTION_OFF_VALUE</option>
@@ -76,7 +73,6 @@
 					name="date_field"
 					type="list"
 					label="MOD_POPULAR_FIELD_DATEFIELD_LABEL"
-					description="MOD_POPULAR_FIELD_DATEFIELD_DESC"
 					default="a.created"
 					showon="date_filtering:range,relative"
 					>
@@ -89,7 +85,6 @@
 					name="start_date_range"
 					type="calendar"
 					label="MOD_POPULAR_FIELD_STARTDATE_LABEL"
-					description="MOD_POPULAR_FIELD_STARTDATE_DESC"
 					translateformat="true"
 					showtime="true"
 					size="22"
@@ -101,7 +96,6 @@
 					name="end_date_range"
 					type="calendar"
 					label="MOD_POPULAR_FIELD_ENDDATE_LABEL"
-					description="MOD_POPULAR_FIELD_ENDDATE_DESC"
 					translateformat="true"
 					showtime="true"
 					size="22"
@@ -113,7 +107,6 @@
 					name="relative_date"
 					type="number"
 					label="MOD_POPULAR_FIELD_RELATIVEDATE_LABEL"
-					description="MOD_POPULAR_FIELD_RELATIVEDATE_DESC"
 					default="30"
 					filter="integer"
 					showon="date_filtering:relative"
@@ -125,14 +118,13 @@
 					name="layout"
 					type="modulelayout"
 					label="JFIELD_ALT_LAYOUT_LABEL"
-					description="JFIELD_ALT_MODULE_LAYOUT_DESC"
-				/>
+					class="custom-select"
+ 				/>
 
 				<field
 					name="moduleclass_sfx"
 					type="textarea"
 					label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
-					description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC"
 					rows="3"
 				/>
 
@@ -140,7 +132,6 @@
 					name="cache"
 					type="list"
 					label="COM_MODULES_FIELD_CACHING_LABEL"
-					description="COM_MODULES_FIELD_CACHING_DESC"
 					default="1"
 					filter="integer"
 					>
@@ -152,7 +143,6 @@
 					name="cache_time"
 					type="number"
 					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
-					description="COM_MODULES_FIELD_CACHE_TIME_DESC"
 					default="900"
 					filter="integer"
 				/>

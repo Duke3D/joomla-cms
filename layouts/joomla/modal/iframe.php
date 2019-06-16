@@ -3,7 +3,7 @@
  * @package     Joomla.Site
  * @subpackage  Layout
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -28,29 +28,19 @@ extract($displayData);
  *                             - url          string   URL of a resource to be inserted as an <iframe> inside the modal body
  *                             - height       string   height of the <iframe> containing the remote resource
  *                             - width        string   width of the <iframe> containing the remote resource
- *                             - bodyHeight   int      Optional height of the modal body in viewport units (vh)
- *                             - modalWidth   int      Optional width of the modal in viewport units (vh)
  * @param   string  $body      Markup for the modal body. Appended after the <iframe> if the URL option is set
  *
  */
 
-$iframeClass = 'iframe';
-
-$bodyHeight = isset($params['bodyHeight']) ? round((int) $params['bodyHeight'], -1) : '';
-
-if ($bodyHeight && $bodyHeight >= 20 && $bodyHeight < 90)
-{
-	$iframeClass .= ' jviewport-height' . $bodyHeight;
-}
-
 $iframeAttributes = array(
-	'class' => $iframeClass,
+	'class' => 'iframe',
 	'src'   => $params['url']
 );
 
 if (isset($params['title']))
 {
 	$iframeAttributes['name'] = addslashes($params['title']);
+	$iframeAttributes['title'] = addslashes($params['title']);
 }
 
 if (isset($params['height']))

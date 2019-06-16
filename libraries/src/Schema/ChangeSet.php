@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,7 +10,10 @@ namespace Joomla\CMS\Schema;
 
 defined('JPATH_PLATFORM') or die;
 
-jimport('joomla.filesystem.folder');
+use Joomla\CMS\Factory;
+use Joomla\CMS\Filesystem\Folder;
+use Joomla\Database\DatabaseDriver;
+use Joomla\Database\UTF8MB4SupportInterface;
 
 /**
  * Contains a set of JSchemaChange objects for a particular instance of Joomla.
@@ -31,9 +34,9 @@ class ChangeSet
 	protected $changeItems = array();
 
 	/**
-	 * \JDatabaseDriver object
+	 * DatabaseDriver object
 	 *
-	 * @var    \JDatabaseDriver
+	 * @var    DatabaseDriver
 	 * @since  2.5
 	 */
 	protected $db = null;
@@ -58,8 +61,8 @@ class ChangeSet
 	 * Constructor: builds array of $changeItems by processing the .sql files in a folder.
 	 * The folder for the Joomla core updates is `administrator/components/com_admin/sql/updates/<database>`.
 	 *
-	 * @param   \JDatabaseDriver  $db      The current database object
-	 * @param   string            $folder  The full path to the folder containing the update queries
+	 * @param   DatabaseDriver  $db      The current database object
+	 * @param   string          $folder  The full path to the folder containing the update queries
 	 *
 	 * @since   2.5
 	 */
@@ -83,7 +86,7 @@ class ChangeSet
 				}
 				catch (\RuntimeException $e)
 				{
-					\JFactory::getApplication()->enqueueMessage($e->getMessage(), 'error');
+					Factory::getApplication()->enqueueMessage($e->getMessage(), 'error');
 				}
 			}
 			else
@@ -107,7 +110,7 @@ class ChangeSet
 			$tmpSchemaChangeItem->checkStatus = 0;
 
 			// Set the check query
-			if ($this->db->hasUTF8mb4Support())
+			if ($this->db instanceof UTF8MB4SupportInterface && $this->db->hasUTF8mb4Support())
 			{
 				$converted = 2;
 				$tmpSchemaChangeItem->queryType = 'UTF8_CONVERSION_UTF8MB4';
@@ -135,8 +138,8 @@ class ChangeSet
 	/**
 	 * Returns a reference to the ChangeSet object, only creating it if it doesn't already exist.
 	 *
-	 * @param   \JDatabaseDriver  $db      The current database object
-	 * @param   string            $folder  The full path to the folder containing the update queries
+	 * @param   DatabaseDriver  $db      The current database object
+	 * @param   string          $folder  The full path to the folder containing the update queries
 	 *
 	 * @return  ChangeSet
 	 *
@@ -146,7 +149,7 @@ class ChangeSet
 	{
 		if (!is_object(static::$instance))
 		{
-			static::$instance = new ChangeSet($db, $folder);
+			static::$instance = new static($db, $folder);
 		}
 
 		return static::$instance;
@@ -269,7 +272,7 @@ class ChangeSet
 			$this->folder = JPATH_ADMINISTRATOR . '/components/com_admin/sql/updates/';
 		}
 
-		return \JFolder::files(
+		return Folder::files(
 			$this->folder . '/' . $sqlFolder, '\.sql$', 1, true, array('.svn', 'CVS', '.DS_Store', '__MACOSX'), array('^\..*', '.*~'), true
 		);
 	}
@@ -295,7 +298,7 @@ class ChangeSet
 			$buffer = file_get_contents($file);
 
 			// Create an array of queries from the sql file
-			$queries = \JDatabaseDriver::splitSql($buffer);
+			$queries = DatabaseDriver::splitSql($buffer);
 
 			foreach ($queries as $query)
 			{

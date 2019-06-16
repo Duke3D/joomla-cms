@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -18,7 +18,7 @@ use Joomla\CMS\Language\Multilanguage;
  *
  * @since  1.6
  */
-class Categories
+class Categories implements CategoryInterface
 {
 	/**
 	 * Array to hold the object instances
@@ -90,7 +90,7 @@ class Categories
 	 * @var    array
 	 * @since  1.6
 	 */
-	protected $_options = null;
+	protected $_options = [];
 
 	/**
 	 * Class constructor
@@ -123,7 +123,8 @@ class Categories
 	 *
 	 * @return  Categories|boolean  Categories object on success, boolean false if an object does not exist
 	 *
-	 * @since   1.6
+	 * @since       1.6
+	 * @deprecated  5.0 Use the ComponentInterface to get the categories
 	 */
 	public static function getInstance($extension, $options = array())
 	{
@@ -134,35 +135,35 @@ class Categories
 			return self::$instances[$hash];
 		}
 
-		$parts = explode('.', $extension);
-		$component = 'com_' . strtolower($parts[0]);
-		$section = count($parts) > 1 ? $parts[1] : '';
-		$classname = ucfirst(substr($component, 4)) . ucfirst($section) . 'Categories';
-
-		if (!class_exists($classname))
+		$categories = null;
+		try
 		{
-			$path = JPATH_SITE . '/components/' . $component . '/helpers/category.php';
+			$parts = explode('.', $extension, 2);
 
-			\JLoader::register($classname, $path);
+			$component = Factory::getApplication()->bootComponent($parts[0]);
 
-			if (!class_exists($classname))
+			if ($component instanceof CategoryServiceInterface)
 			{
-				return false;
+				$categories = $component->getCategory($options, count($parts) > 1 ? $parts[1] : '');
 			}
 		}
+		catch (SectionNotFoundException $e)
+		{
+			$categories = null;
+		}
 
-		self::$instances[$hash] = new $classname($options);
+		self::$instances[$hash] = $categories;
 
 		return self::$instances[$hash];
 	}
 
 	/**
-	 * Loads a specific category and all its children in a CategoryNode object
+	 * Loads a specific category and all its children in a CategoryNode object.
 	 *
 	 * @param   mixed    $id         an optional id integer or equal to 'root'
 	 * @param   boolean  $forceload  True to force  the _load method to execute
 	 *
-	 * @return  CategoryNode|null|boolean  CategoryNode object or null if $id is not valid
+	 * @return  CategoryNode|null  CategoryNode object or null if $id is not valid
 	 *
 	 * @since   1.6
 	 */
@@ -189,13 +190,20 @@ class Categories
 		{
 			return $this->_nodes[$id];
 		}
-		// If we processed this $id already and it was not valid, then return null.
-		elseif (isset($this->_checkedCategories[$id]))
-		{
-			return;
-		}
 
-		return false;
+		return null;
+	}
+
+	/**
+	 * Returns the extension of the category.
+	 *
+	 * @return   string  The extension
+	 *
+	 * @since   3.9.0
+	 */
+	public function getExtension()
+	{
+		return $this->_extension;
 	}
 
 	/**
@@ -209,7 +217,7 @@ class Categories
 	 */
 	protected function _load($id)
 	{
-		/** @var JDatabaseDriver */
+		/** @var \Joomla\Database\DatabaseDriver */
 		$db   = Factory::getDbo();
 		$app  = Factory::getApplication();
 		$user = Factory::getUser();

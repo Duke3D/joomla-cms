@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,8 +10,11 @@ namespace Joomla\CMS\Application;
 
 defined('JPATH_PLATFORM') or die;
 
-jimport('joomla.filesystem.folder');
-
+use Joomla\CMS\Event\BeforeExecuteEvent;
+use Joomla\CMS\Filesystem\Folder;
+use Joomla\CMS\Input\Cli;
+use Joomla\CMS\Log\Log;
+use Joomla\Event\DispatcherInterface;
 use Joomla\Registry\Registry;
 
 /**
@@ -19,14 +22,14 @@ use Joomla\Registry\Registry;
  *
  * @link   https://secure.php.net/manual/en/book.pcntl.php
  * @link   https://secure.php.net/manual/en/features.commandline.php
- * @since  11.1
+ * @since  1.7.0
  */
-class DaemonApplication extends CliApplication
+abstract class DaemonApplication extends CliApplication
 {
 	/**
 	 * @var    array  The available POSIX signals to be caught by default.
 	 * @link   https://secure.php.net/manual/pcntl.constants.php
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	protected static $signals = array(
 		'SIGHUP',
@@ -69,63 +72,63 @@ class DaemonApplication extends CliApplication
 
 	/**
 	 * @var    boolean  True if the daemon is in the process of exiting.
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	protected $exiting = false;
 
 	/**
 	 * @var    integer  The parent process id.
-	 * @since  12.1
+	 * @since  3.0.0
 	 */
 	protected $parentId = 0;
 
 	/**
 	 * @var    integer  The process id of the daemon.
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	protected $processId = 0;
 
 	/**
 	 * @var    boolean  True if the daemon is currently running.
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	protected $running = false;
 
 	/**
 	 * Class constructor.
 	 *
-	 * @param   \JInputCli         $input       An optional argument to provide dependency injection for the application's
-	 *                                         input object.  If the argument is a \JInputCli object that object will become
-	 *                                         the application's input object, otherwise a default input object is created.
-	 * @param   Registry           $config      An optional argument to provide dependency injection for the application's
-	 *                                         config object.  If the argument is a Registry object that object will become
-	 *                                         the application's config object, otherwise a default config object is created.
-	 * @param   \JEventDispatcher  $dispatcher  An optional argument to provide dependency injection for the application's
-	 *                                         event dispatcher.  If the argument is a \JEventDispatcher object that object will become
-	 *                                         the application's event dispatcher, if it is null then the default event dispatcher
-	 *                                         will be created based on the application's loadDispatcher() method.
+	 * @param   \JInputCli           $input       An optional argument to provide dependency injection for the application's
+	 *                                            input object.  If the argument is a JInputCli object that object will become
+	 *                                            the application's input object, otherwise a default input object is created.
+	 * @param   Registry             $config      An optional argument to provide dependency injection for the application's
+	 *                                            config object.  If the argument is a Registry object that object will become
+	 *                                            the application's config object, otherwise a default config object is created.
+	 * @param   DispatcherInterface  $dispatcher  An optional argument to provide dependency injection for the application's
+	 *                                            event dispatcher.  If the argument is a DispatcherInterface object that object will become
+	 *                                            the application's event dispatcher, if it is null then the default event dispatcher
+	 *                                            will be created based on the application's loadDispatcher() method.
 	 *
-	 * @since   11.1
-	 * @throws  \RuntimeException
+	 * @see     JApplicationBase::loadDispatcher()
+	 * @since   1.7.0
 	 */
-	public function __construct(\JInputCli $input = null, Registry $config = null, \JEventDispatcher $dispatcher = null)
+	public function __construct(Cli $input = null, Registry $config = null, DispatcherInterface $dispatcher = null)
 	{
 		// Verify that the process control extension for PHP is available.
 		if (!defined('SIGHUP'))
 		{
-			\JLog::add('The PCNTL extension for PHP is not available.', \JLog::ERROR);
+			Log::add('The PCNTL extension for PHP is not available.', Log::ERROR);
 			throw new \RuntimeException('The PCNTL extension for PHP is not available.');
 		}
 
 		// Verify that POSIX support for PHP is available.
 		if (!function_exists('posix_getpid'))
 		{
-			\JLog::add('The POSIX extension for PHP is not available.', \JLog::ERROR);
+			Log::add('The POSIX extension for PHP is not available.', Log::ERROR);
 			throw new \RuntimeException('The POSIX extension for PHP is not available.');
 		}
 
 		// Call the parent constructor.
-		parent::__construct($input, $config, $dispatcher);
+		parent::__construct($input, $config, null, null, $dispatcher);
 
 		// Set some system limits.
 		@set_time_limit($this->config->get('max_execution_time', 0));
@@ -146,19 +149,19 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @see     pcntl_signal()
 	 * @throws  \RuntimeException
 	 */
 	public static function signal($signal)
 	{
 		// Log all signals sent to the daemon.
-		\JLog::add('Received signal: ' . $signal, \JLog::DEBUG);
+		Log::add('Received signal: ' . $signal, Log::DEBUG);
 
 		// Let's make sure we have an application instance.
-		if (!is_subclass_of(static::$instance, 'CliApplication'))
+		if (!is_subclass_of(static::$instance, CliApplication::class))
 		{
-			\JLog::add('Cannot find the application instance.', \JLog::EMERGENCY);
+			Log::add('Cannot find the application instance.', Log::EMERGENCY);
 			throw new \RuntimeException('Cannot find the application instance.');
 		}
 
@@ -214,7 +217,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  boolean  True if daemon is active.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function isActive()
 	{
@@ -244,7 +247,7 @@ class DaemonApplication extends CliApplication
 		{
 			// No response so remove the process id file and log the situation.
 			@ unlink($pidFile);
-			\JLog::add('The process found based on PID file was unresponsive.', \JLog::WARNING);
+			Log::add('The process found based on PID file was unresponsive.', Log::WARNING);
 
 			return false;
 		}
@@ -259,7 +262,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  DaemonApplication  Instance of $this to allow chaining.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function loadConfiguration($data)
 	{
@@ -357,17 +360,20 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function execute()
 	{
-		// Trigger the onBeforeExecute event.
-		$this->triggerEvent('onBeforeExecute');
+		// Trigger the onBeforeExecute event
+		$this->getDispatcher()->dispatch(
+			'onBeforeExecute',
+			new BeforeExecuteEvent('onBeforeExecute', ['subject' => $this, 'container' => $this->getContainer()])
+		);
 
 		// Enable basic garbage collection.
 		gc_enable();
 
-		\JLog::add('Starting ' . $this->name, \JLog::INFO);
+		Log::add('Starting ' . $this->name, Log::INFO);
 
 		// Set off the process for becoming a daemon.
 		if ($this->daemonize())
@@ -392,7 +398,7 @@ class DaemonApplication extends CliApplication
 		// We were not able to daemonize the application so log the failure and die gracefully.
 		else
 		{
-			\JLog::add('Starting ' . $this->name . ' failed', \JLog::INFO);
+			Log::add('Starting ' . $this->name . ' failed', Log::INFO);
 		}
 
 		// Trigger the onAfterExecute event.
@@ -404,11 +410,11 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function restart()
 	{
-		\JLog::add('Stopping ' . $this->name, \JLog::INFO);
+		Log::add('Stopping ' . $this->name, Log::INFO);
 		$this->shutdown(true);
 	}
 
@@ -417,11 +423,11 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function stop()
 	{
-		\JLog::add('Stopping ' . $this->name, \JLog::INFO);
+		Log::add('Stopping ' . $this->name, Log::INFO);
 		$this->shutdown();
 	}
 
@@ -430,7 +436,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  boolean  True if identity successfully changed
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @see     posix_setuid()
 	 */
 	protected function changeIdentity()
@@ -445,7 +451,7 @@ class DaemonApplication extends CliApplication
 		// Change the user id for the process id file if necessary.
 		if ($uid && (fileowner($file) != $uid) && (!@ chown($file, $uid)))
 		{
-			\JLog::add('Unable to change user ownership of the process id file.', \JLog::ERROR);
+			Log::add('Unable to change user ownership of the process id file.', Log::ERROR);
 
 			return false;
 		}
@@ -453,7 +459,7 @@ class DaemonApplication extends CliApplication
 		// Change the group id for the process id file if necessary.
 		if ($gid && (filegroup($file) != $gid) && (!@ chgrp($file, $gid)))
 		{
-			\JLog::add('Unable to change group ownership of the process id file.', \JLog::ERROR);
+			Log::add('Unable to change group ownership of the process id file.', Log::ERROR);
 
 			return false;
 		}
@@ -467,7 +473,7 @@ class DaemonApplication extends CliApplication
 		// Change the user id for the process necessary.
 		if ($uid && (posix_getuid($file) != $uid) && (!@ posix_setuid($uid)))
 		{
-			\JLog::add('Unable to change user ownership of the proccess.', \JLog::ERROR);
+			Log::add('Unable to change user ownership of the proccess.', Log::ERROR);
 
 			return false;
 		}
@@ -475,7 +481,7 @@ class DaemonApplication extends CliApplication
 		// Change the group id for the process necessary.
 		if ($gid && (posix_getgid($file) != $gid) && (!@ posix_setgid($gid)))
 		{
-			\JLog::add('Unable to change group ownership of the proccess.', \JLog::ERROR);
+			Log::add('Unable to change group ownership of the proccess.', Log::ERROR);
 
 			return false;
 		}
@@ -484,7 +490,7 @@ class DaemonApplication extends CliApplication
 		$user = posix_getpwuid($uid);
 		$group = posix_getgrgid($gid);
 
-		\JLog::add('Changed daemon identity to ' . $user['name'] . ':' . $group['name'], \JLog::INFO);
+		Log::add('Changed daemon identity to ' . $user['name'] . ':' . $group['name'], Log::INFO);
 
 		return true;
 	}
@@ -494,7 +500,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @throws  \RuntimeException
 	 */
 	protected function daemonize()
@@ -502,7 +508,7 @@ class DaemonApplication extends CliApplication
 		// Is there already an active daemon running?
 		if ($this->isActive())
 		{
-			\JLog::add($this->name . ' daemon is still running. Exiting the application.', \JLog::EMERGENCY);
+			Log::add($this->name . ' daemon is still running. Exiting the application.', Log::EMERGENCY);
 
 			return false;
 		}
@@ -534,7 +540,7 @@ class DaemonApplication extends CliApplication
 		}
 		catch (\RuntimeException $e)
 		{
-			\JLog::add('Unable to fork.', \JLog::EMERGENCY);
+			Log::add('Unable to fork.', Log::EMERGENCY);
 
 			return false;
 		}
@@ -542,7 +548,7 @@ class DaemonApplication extends CliApplication
 		// Verify the process id is valid.
 		if ($this->processId < 1)
 		{
-			\JLog::add('The process id is invalid; the fork failed.', \JLog::EMERGENCY);
+			Log::add('The process id is invalid; the fork failed.', Log::EMERGENCY);
 
 			return false;
 		}
@@ -553,7 +559,7 @@ class DaemonApplication extends CliApplication
 		// Write out the process id file for concurrency management.
 		if (!$this->writeProcessIdFile())
 		{
-			\JLog::add('Unable to write the pid file at: ' . $this->config->get('application_pid_file'), \JLog::EMERGENCY);
+			Log::add('Unable to write the pid file at: ' . $this->config->get('application_pid_file'), Log::EMERGENCY);
 
 			return false;
 		}
@@ -564,13 +570,13 @@ class DaemonApplication extends CliApplication
 			// If the identity change was required then we need to return false.
 			if ($this->config->get('application_require_identity'))
 			{
-				\JLog::add('Unable to change process owner.', \JLog::CRITICAL);
+				Log::add('Unable to change process owner.', Log::CRITICAL);
 
 				return false;
 			}
 			else
 			{
-				\JLog::add('Unable to change process owner.', \JLog::WARNING);
+				Log::add('Unable to change process owner.', Log::WARNING);
 			}
 		}
 
@@ -592,12 +598,12 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   12.1
+	 * @since   3.0.0
 	 * @throws  \RuntimeException
 	 */
 	protected function detach()
 	{
-		\JLog::add('Detaching the ' . $this->name . ' daemon.', \JLog::DEBUG);
+		Log::add('Detaching the ' . $this->name . ' daemon.', Log::DEBUG);
 
 		// Attempt to fork the process.
 		$pid = $this->fork();
@@ -606,7 +612,7 @@ class DaemonApplication extends CliApplication
 		if ($pid)
 		{
 			// Add the log entry for debugging purposes and exit gracefully.
-			\JLog::add('Ending ' . $this->name . ' parent process', \JLog::DEBUG);
+			Log::add('Ending ' . $this->name . ' parent process', Log::DEBUG);
 			$this->close();
 		}
 		// We are in the forked child process.
@@ -626,7 +632,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  integer  The child process id to the parent process, zero to the child process.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @throws  \RuntimeException
 	 */
 	protected function fork()
@@ -648,7 +654,7 @@ class DaemonApplication extends CliApplication
 		else
 		{
 			// Log the fork.
-			\JLog::add('Process forked ' . $pid, \JLog::DEBUG);
+			Log::add('Process forked ' . $pid, Log::DEBUG);
 		}
 
 		// Trigger the onFork event.
@@ -663,7 +669,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	protected function gc()
 	{
@@ -681,7 +687,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @see     pcntl_signal()
 	 */
 	protected function setupSignalHandlers()
@@ -693,7 +699,7 @@ class DaemonApplication extends CliApplication
 			if (!defined($signal) || !is_int(constant($signal)) || (constant($signal) === 0))
 			{
 				// Define the signal to avoid notices.
-				\JLog::add('Signal "' . $signal . '" not defined. Defining it as null.', \JLog::DEBUG);
+				Log::add('Signal "' . $signal . '" not defined. Defining it as null.', Log::DEBUG);
 				define($signal, null);
 
 				// Don't listen for signal.
@@ -703,7 +709,7 @@ class DaemonApplication extends CliApplication
 			// Attach the signal handler for the signal.
 			if (!$this->pcntlSignal(constant($signal), array('DaemonApplication', 'signal')))
 			{
-				\JLog::add(sprintf('Unable to reroute signal handler: %s', $signal), \JLog::EMERGENCY);
+				Log::add(sprintf('Unable to reroute signal handler: %s', $signal), Log::EMERGENCY);
 
 				return false;
 			}
@@ -719,7 +725,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	protected function shutdown($restart = false)
 	{
@@ -737,7 +743,7 @@ class DaemonApplication extends CliApplication
 		// If we aren't already daemonized then just kill the application.
 		if (!$this->running && !$this->isActive())
 		{
-			\JLog::add('Process was not daemonized yet, just halting current process', \JLog::INFO);
+			Log::add('Process was not daemonized yet, just halting current process', Log::INFO);
 			$this->close();
 		}
 
@@ -772,14 +778,14 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  boolean
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	protected function writeProcessIdFile()
 	{
 		// Verify the process id is valid.
 		if ($this->processId < 1)
 		{
-			\JLog::add('The process id is invalid.', \JLog::EMERGENCY);
+			Log::add('The process id is invalid.', Log::EMERGENCY);
 
 			return false;
 		}
@@ -789,7 +795,7 @@ class DaemonApplication extends CliApplication
 
 		if (empty($file))
 		{
-			\JLog::add('The process id file path is empty.', \JLog::ERROR);
+			Log::add('The process id file path is empty.', Log::ERROR);
 
 			return false;
 		}
@@ -797,9 +803,9 @@ class DaemonApplication extends CliApplication
 		// Make sure that the folder where we are writing the process id file exists.
 		$folder = dirname($file);
 
-		if (!is_dir($folder) && !\JFolder::create($folder))
+		if (!is_dir($folder) && !Folder::create($folder))
 		{
-			\JLog::add('Unable to create directory: ' . $folder, \JLog::ERROR);
+			Log::add('Unable to create directory: ' . $folder, Log::ERROR);
 
 			return false;
 		}
@@ -807,7 +813,7 @@ class DaemonApplication extends CliApplication
 		// Write the process id file out to disk.
 		if (!file_put_contents($file, $this->processId))
 		{
-			\JLog::add('Unable to write proccess id file: ' . $file, \JLog::ERROR);
+			Log::add('Unable to write proccess id file: ' . $file, Log::ERROR);
 
 			return false;
 		}
@@ -815,7 +821,7 @@ class DaemonApplication extends CliApplication
 		// Make sure the permissions for the proccess id file are accurate.
 		if (!chmod($file, 0644))
 		{
-			\JLog::add('Unable to adjust permissions for the proccess id file: ' . $file, \JLog::ERROR);
+			Log::add('Unable to adjust permissions for the proccess id file: ' . $file, Log::ERROR);
 
 			return false;
 		}
@@ -828,7 +834,7 @@ class DaemonApplication extends CliApplication
 	 *
 	 * @return  void
 	 *
-	 * @since   12.1
+	 * @since   3.0.0
 	 */
 	protected function postFork()
 	{
@@ -844,7 +850,7 @@ class DaemonApplication extends CliApplication
 	 * @return  integer  The child process exit code.
 	 *
 	 * @see     pcntl_wexitstatus()
-	 * @since   11.3
+	 * @since   1.7.3
 	 */
 	protected function pcntlChildExitStatus($status)
 	{
@@ -860,7 +866,7 @@ class DaemonApplication extends CliApplication
 	 *                   will be created, and a PHP error is raised.
 	 *
 	 * @see     pcntl_fork()
-	 * @since   11.3
+	 * @since   1.7.3
 	 */
 	protected function pcntlFork()
 	{
@@ -879,7 +885,7 @@ class DaemonApplication extends CliApplication
 	 * @return  boolean  True on success.
 	 *
 	 * @see     pcntl_signal()
-	 * @since   11.3
+	 * @since   1.7.3
 	 */
 	protected function pcntlSignal($signal, $handler, $restart = true)
 	{
@@ -897,7 +903,7 @@ class DaemonApplication extends CliApplication
 	 *                   was provided as an option (on wait3-available systems) and no child was available.
 	 *
 	 * @see     pcntl_wait()
-	 * @since   11.3
+	 * @since   1.7.3
 	 */
 	protected function pcntlWait(&$status, $options = 0)
 	{

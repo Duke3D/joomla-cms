@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -16,9 +16,8 @@ use Joomla\Registry\Registry;
  * Object representing a component extension record
  *
  * @since  3.7.0
- * @note   As of 4.0 this class will no longer extend JObject
  */
-class ComponentRecord extends \JObject
+class ComponentRecord
 {
 	/**
 	 * Primary key
@@ -44,6 +43,14 @@ class ComponentRecord extends \JObject
 	 * @note   This field is protected to require reading this field to proxy through the getter to convert the params to a Registry instance
 	 */
 	protected $params;
+
+	/**
+	 * The extension namespace
+	 *
+	 * @var    string
+	 * @since  4.0.0
+	 */
+	public $namespace;
 
 	/**
 	 * Indicates if this component is enabled
@@ -76,7 +83,7 @@ class ComponentRecord extends \JObject
 	 * @return  mixed  The property value or null.
 	 *
 	 * @since   3.7.0
-	 * @deprecated  4.0  Access the item parameters through the `getParams()` method
+	 * @deprecated  5.0  Access the item parameters through the `getParams()` method
 	 */
 	public function __get($name)
 	{
@@ -97,7 +104,7 @@ class ComponentRecord extends \JObject
 	 * @return  void
 	 *
 	 * @since   3.7.0
-	 * @deprecated  4.0  Set the item parameters through the `setParams()` method
+	 * @deprecated  5.0  Set the item parameters through the `setParams()` method
 	 */
 	public function __set($name, $value)
 	{

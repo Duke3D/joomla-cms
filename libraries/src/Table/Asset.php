@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,10 +10,13 @@ namespace Joomla\CMS\Table;
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\Language\Text;
+use Joomla\Database\DatabaseDriver;
+
 /**
  * Table class supporting modified pre-order tree traversal behavior.
  *
- * @since  11.1
+ * @since  1.7.0
  */
 class Asset extends Nested
 {
@@ -21,7 +24,7 @@ class Asset extends Nested
 	 * The primary key of the asset.
 	 *
 	 * @var    integer
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $id = null;
 
@@ -29,7 +32,7 @@ class Asset extends Nested
 	 * The unique name of the asset.
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $name = null;
 
@@ -37,7 +40,7 @@ class Asset extends Nested
 	 * The human readable title of the asset.
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $title = null;
 
@@ -45,18 +48,18 @@ class Asset extends Nested
 	 * The rules for the asset stored in a JSON string
 	 *
 	 * @var    string
-	 * @since  11.1
+	 * @since  1.7.0
 	 */
 	public $rules = null;
 
 	/**
 	 * Constructor
 	 *
-	 * @param   \JDatabaseDriver  $db  Database driver object.
+	 * @param   DatabaseDriver  $db  Database driver object.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
-	public function __construct($db)
+	public function __construct(DatabaseDriver $db)
 	{
 		parent::__construct('#__assets', 'id', $db);
 	}
@@ -68,7 +71,7 @@ class Asset extends Nested
 	 *
 	 * @return  integer
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function loadByName($name)
 	{
@@ -80,10 +83,21 @@ class Asset extends Nested
 	 *
 	 * @return  boolean  True if the instance is sane and able to be stored in the database.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 */
 	public function check()
 	{
+		try
+		{
+			parent::check();
+		}
+		catch (\Exception $e)
+		{
+			$this->setError($e->getMessage());
+
+			return false;
+		}
+
 		$this->parent_id = (int) $this->parent_id;
 
 		if (empty($this->rules))
@@ -94,7 +108,7 @@ class Asset extends Nested
 		// Nested does not allow parent_id = 0, override this.
 		if ($this->parent_id > 0)
 		{
-			// Get the \JDatabaseQuery object
+			// Get the DatabaseQuery object
 			$query = $this->_db->getQuery(true)
 				->select('1')
 				->from($this->_db->quoteName($this->_tbl))
@@ -105,7 +119,7 @@ class Asset extends Nested
 				return true;
 			}
 
-			$this->setError('Invalid Parent ID');
+			$this->setError(Text::_('JLIB_DATABASE_ERROR_INVALID_PARENT_ID'));
 
 			return false;
 		}
@@ -151,7 +165,7 @@ class Asset extends Nested
 				->where('parent_id = %d');
 
 			// If the table has an ordering field, use that for ordering.
-			if (property_exists($this, 'ordering'))
+			if ($this->hasField('ordering'))
 			{
 				$query->order('parent_id, ordering, lft');
 			}

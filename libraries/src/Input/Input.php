@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -17,7 +17,7 @@ use Joomla\CMS\Filter\InputFilter;
  *
  * This is an abstracted input class used to manage retrieving data from the application environment.
  *
- * @since       11.1
+ * @since       1.7.0
  * @deprecated  5.0  Use Joomla\Input\Input instead
  *
  * @property-read   Input   $get
@@ -43,7 +43,7 @@ class Input extends \Joomla\Input\Input
 	 * Input objects
 	 *
 	 * @var    Input[]
-	 * @since  11.1
+	 * @since  1.7.0
 	 * @deprecated  5.0  Use Joomla\Input\Input instead
 	 */
 	protected $inputs = array();
@@ -54,7 +54,7 @@ class Input extends \Joomla\Input\Input
 	 * @param   array  $source   Source data (Optional, default is $_REQUEST)
 	 * @param   array  $options  Array of configuration parameters (Optional)
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @deprecated  5.0  Use Joomla\Input\Input instead
 	 */
 	public function __construct($source = null, array $options = array())
@@ -72,9 +72,9 @@ class Input extends \Joomla\Input\Input
 	 *
 	 * @param   mixed  $name  Name of the input object to retrieve.
 	 *
-	 * @return  Input  The request input object
+	 * @return  \Joomla\Input\Input  The request input object
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @deprecated  5.0  Use Joomla\Input\Input instead
 	 */
 	public function __get($name)
@@ -112,15 +112,15 @@ class Input extends \Joomla\Input\Input
 	 * @param   array   $vars           Associative array of keys and filter types to apply.
 	 *                                  If empty and datasource is null, all the input data will be returned
 	 *                                  but filtered using the filter given by the parameter defaultFilter in
-	 *                                  JFilterInput::clean.
+	 *                                  InputFilter::clean.
 	 * @param   mixed   $datasource     Array to retrieve data from, or null.
-	 * @param   string  $defaultFilter  Default filter used in JFilterInput::clean if vars is empty and
+	 * @param   string  $defaultFilter  Default filter used in InputFilter::clean if vars is empty and
 	 *                                  datasource is null. If 'unknown', the default case is used in
-	 *                                  JFilterInput::clean.
+	 *                                  InputFilter::clean.
 	 *
 	 * @return  mixed  The filtered input data.
 	 *
-	 * @since   11.1
+	 * @since   1.7.0
 	 * @deprecated  5.0  Use Joomla\Input\Input instead
 	 */
 	public function getArray(array $vars = array(), $datasource = null, $defaultFilter = 'unknown')
@@ -134,11 +134,11 @@ class Input extends \Joomla\Input\Input
 	 * @param   array   $vars           Associative array of keys and filter types to apply.
 	 *                                  If empty and datasource is null, all the input data will be returned
 	 *                                  but filtered using the filter given by the parameter defaultFilter in
-	 *                                  JFilterInput::clean.
+	 *                                  InputFilter::clean.
 	 * @param   mixed   $datasource     Array to retrieve data from, or null.
-	 * @param   string  $defaultFilter  Default filter used in JFilterInput::clean if vars is empty and
+	 * @param   string  $defaultFilter  Default filter used in InputFilter::clean if vars is empty and
 	 *                                  datasource is null. If 'unknown', the default case is used in
-	 *                                  JFilterInput::clean.
+	 *                                  InputFilter::clean.
 	 * @param   bool    $recursion      Flag to indicate a recursive function call.
 	 *
 	 * @return  mixed  The filtered input data.
@@ -177,7 +177,7 @@ class Input extends \Joomla\Input\Input
 			}
 			else
 			{
-				$filter = isset($defaultFilter) ? $defaultFilter : $v;
+				$filter = $defaultFilter ?? $v;
 
 				if (is_null($datasource))
 				{
@@ -204,7 +204,7 @@ class Input extends \Joomla\Input\Input
 	 *
 	 * @return  Input  The input object.
 	 *
-	 * @since   12.1
+	 * @since   3.0.0
 	 * @deprecated  5.0  Use Joomla\Input\Input instead
 	 */
 	public function unserialize($input)

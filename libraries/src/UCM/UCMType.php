@@ -2,7 +2,7 @@
 /**
  * Joomla! Content Management System
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -10,7 +10,9 @@ namespace Joomla\CMS\UCM;
 
 defined('JPATH_PLATFORM') or die;
 
-use Joomla\CMS\Application\BaseApplication;
+use Joomla\Application\AbstractApplication;
+use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseDriver;
 
 /**
  * UCM Class for handling content types
@@ -64,7 +66,7 @@ class UCMType implements UCM
 	/**
 	 * The Database object
 	 *
-	 * @var    \JDatabaseDriver
+	 * @var    DatabaseDriver
 	 * @since  3.1
 	 */
 	protected $db;
@@ -80,16 +82,16 @@ class UCMType implements UCM
 	/**
 	 * Class constructor
 	 *
-	 * @param   string            $alias        The alias for the item
-	 * @param   \JDatabaseDriver  $database     The database object
-	 * @param   BaseApplication   $application  The application object
+	 * @param   string               $alias        The alias for the item
+	 * @param   DatabaseDriver       $database     The database object
+	 * @param   AbstractApplication  $application  The application object
 	 *
 	 * @since   3.1
 	 */
-	public function __construct($alias = null, \JDatabaseDriver $database = null, BaseApplication $application = null)
+	public function __construct($alias = null, DatabaseDriver $database = null, AbstractApplication $application = null)
 	{
-		$this->db = $database ?: \JFactory::getDbo();
-		$app      = $application ?: \JFactory::getApplication();
+		$this->db = $database ?: Factory::getDbo();
+		$app      = $application ?: Factory::getApplication();
 
 		// Make the best guess we can in the absence of information.
 		$this->alias = $alias ?: $app->input->get('option') . '.' . $app->input->get('view');
@@ -196,7 +198,7 @@ class UCMType implements UCM
 		$query = $this->db->getQuery(true);
 		$query->select('ct.type_id');
 		$query->from($this->db->quoteName('#__content_types', 'ct'));
-		$query->where($this->db->quoteName('ct.type_alias') . ' = ' . $this->db->q($alias));
+		$query->where($this->db->quoteName('ct.type_alias') . ' = ' . $this->db->quote($alias));
 
 		$this->db->setQuery($query);
 
@@ -247,6 +249,6 @@ class UCMType implements UCM
 			$this->fieldmapExpand(false);
 		}
 
-		return isset($this->fieldmap->common->$ucmField) ? $this->fieldmap->common->$ucmField : null;
+		return $this->fieldmap->common->$ucmField ?? null;
 	}
 }

@@ -3,12 +3,14 @@
  * @package     Joomla.Libraries
  * @subpackage  HTML
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('JPATH_PLATFORM') or die;
 
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\Text;
 use Joomla\Utilities\ArrayHelper;
 
 /**
@@ -57,9 +59,9 @@ abstract class JHtmlSelect
 	 */
 	public static function booleanlist($name, $attribs = array(), $selected = null, $yes = 'JYES', $no = 'JNO', $id = false)
 	{
-		$arr = array(JHtml::_('select.option', '0', JText::_($no)), JHtml::_('select.option', '1', JText::_($yes)));
+		$arr = array(HTMLHelper::_('select.option', '0', Text::_($no)), HTMLHelper::_('select.option', '1', Text::_($yes)));
 
-		return JHtml::_('select.radiolist', $arr, $name, $attribs, 'value', 'text', (int) $selected, $id);
+		return HTMLHelper::_('select.radiolist', $arr, $name, $attribs, 'value', 'text', (int) $selected, $id);
 	}
 
 	/**
@@ -70,7 +72,7 @@ abstract class JHtmlSelect
 	 * @param   mixed    $attribs    Additional HTML attributes for the `<select>` tag. This
 	 *                               can be an array of attributes, or an array of options. Treated as options
 	 *                               if it is the last argument passed. Valid options are:
-	 *                               Format options, see {@see JHtml::$formatOptions}.
+	 *                               Format options, see {@see HTMLHelper::$formatOptions}.
 	 *                               Selection options, see {@see JHtmlSelect::options()}.
 	 *                               list.attr, string|array: Additional attributes for the select
 	 *                               element.
@@ -93,7 +95,7 @@ abstract class JHtmlSelect
 		$translate = false)
 	{
 		// Set default options
-		$options = array_merge(JHtml::$formatOptions, array('format.depth' => 0, 'id' => false));
+		$options = array_merge(HTMLHelper::$formatOptions, array('format.depth' => 0, 'id' => false));
 
 		if (is_array($attribs) && func_num_args() === 3)
 		{
@@ -133,62 +135,15 @@ abstract class JHtmlSelect
 		$id = $options['id'] !== false ? $options['id'] : $name;
 		$id = str_replace(array('[', ']', ' '), '', $id);
 
+		// If if the selectbox contains "custom-select-color-state" then load the JS file
+		if (strpos($attribs, 'custom-select-color-state') !== false)
+		{
+			HTMLHelper::_('script', 'system/fields/select-colour.min.js', array('version' => 'auto', 'relative' => true));
+		}
+
 		$baseIndent = str_repeat($options['format.indent'], $options['format.depth']++);
 		$html = $baseIndent . '<select' . ($id !== '' ? ' id="' . $id . '"' : '') . ' name="' . $name . '"' . $attribs . '>' . $options['format.eol']
 			. static::options($data, $options) . $baseIndent . '</select>' . $options['format.eol'];
-
-		return $html;
-	}
-
-	/**
-	 * Method to build a list with suggestions
-	 *
-	 * @param   array    $data       An array of objects, arrays, or values.
-	 * @param   string   $optKey     The name of the object variable for the option value. If
-	 *                               set to null, the index of the value array is used.
-	 * @param   string   $optText    The name of the object variable for the option text.
-	 * @param   mixed    $idtag      Value of the field id or null by default
-	 * @param   boolean  $translate  True to translate
-	 *
-	 * @return  string  HTML for the select list
-	 *
-	 * @since       3.2
-	 * @deprecated  4.0  Just create the `<datalist>` directly instead
-	 */
-	public static function suggestionlist($data, $optKey = 'value', $optText = 'text', $idtag = null, $translate = false)
-	{
-		// Log deprecated message
-		JLog::add(
-			sprintf(
-				'%s() is deprecated. Create the <datalist> tag directly instead.',
-				__METHOD__
-			),
-			JLog::WARNING,
-			'deprecated'
-		);
-
-		// Note: $idtag is requried but has to be an optional argument in the funtion call due to argument order
-		if (!$idtag)
-		{
-			throw new InvalidArgumentException('$idtag is a required argument in deprecated JHtmlSelect::suggestionlist');
-		}
-
-		// Set default options
-		$options = array_merge(JHtml::$formatOptions, array('format.depth' => 0, 'id' => false));
-
-		// Get options from the parameters
-		$options['id'] = $idtag;
-		$options['list.attr'] = null;
-		$options['list.translate'] = $translate;
-		$options['option.key'] = $optKey;
-		$options['option.text'] = $optText;
-		$options['list.select'] = null;
-
-		$id = ' id="' . $idtag . '"';
-
-		$baseIndent = str_repeat($options['format.indent'], $options['format.depth']++);
-		$html = $baseIndent . '<datalist' . $id . '>' . $options['format.eol']
-			. static::options($data, $options) . $baseIndent . '</datalist>' . $options['format.eol'];
 
 		return $html;
 	}
@@ -199,7 +154,7 @@ abstract class JHtmlSelect
 	 * @param   array   $data     An array of groups, each of which is an array of options.
 	 * @param   string  $name     The value of the HTML name attribute
 	 * @param   array   $options  Options, an array of key/value pairs. Valid options are:
-	 *                            Format options, {@see JHtml::$formatOptions}.
+	 *                            Format options, {@see HTMLHelper::$formatOptions}.
 	 *                            Selection options. See {@see JHtmlSelect::options()}.
 	 *                            group.id: The property in each group to use as the group id
 	 *                            attribute. Defaults to none.
@@ -217,7 +172,7 @@ abstract class JHtmlSelect
 	 *                            list.select: either the value of one selected option or an array
 	 *                            of selected options. Default: none.
 	 *                            list.translate: Boolean. If set, text and labels are translated via
-	 *                            JText::_().
+	 *                            Text::_().
 	 *
 	 * @return  string  HTML for the select list
 	 *
@@ -228,7 +183,7 @@ abstract class JHtmlSelect
 	{
 		// Set default options and overwrite with anything passed in
 		$options = array_merge(
-			JHtml::$formatOptions,
+			HTMLHelper::$formatOptions,
 			array('format.depth' => 0, 'group.items' => 'items', 'group.label' => 'text', 'group.label.toHtml' => true, 'id' => false),
 			$options
 		);
@@ -265,7 +220,8 @@ abstract class JHtmlSelect
 		$options['groups'] = false;
 
 		$baseIndent = str_repeat($options['format.indent'], $options['format.depth']++);
-		$html = $baseIndent . '<select' . ($id !== '' ? ' id="' . $id . '"' : '') . ' name="' . $name . '"' . $attribs . '>' . $options['format.eol'];
+		$html = $baseIndent . '<select' . ($id !== '' ? ' id="' . $id . '"' : '')
+				. ' name="' . $name . '"' . $attribs . '>' . $options['format.eol'];
 		$groupIndent = str_repeat($options['format.indent'], $options['format.depth']++);
 
 		foreach ($data as $dataKey => $group)
@@ -355,7 +311,7 @@ abstract class JHtmlSelect
 	public static function integerlist($start, $end, $inc, $name, $attribs = null, $selected = null, $format = '')
 	{
 		// Set default options
-		$options = array_merge(JHtml::$formatOptions, array('format.depth' => 0, 'option.format' => '', 'id' => null));
+		$options = array_merge(HTMLHelper::$formatOptions, array('format.depth' => 0, 'option.format' => '', 'id' => null));
 
 		if (is_array($attribs) && func_num_args() === 5)
 		{
@@ -387,47 +343,7 @@ abstract class JHtmlSelect
 		// Tell genericlist() to use array keys
 		$options['option.key'] = null;
 
-		return JHtml::_('select.genericlist', $data, $name, $options);
-	}
-
-	/**
-	 * Create a placeholder for an option group.
-	 *
-	 * @param   string  $text     The text for the option
-	 * @param   string  $optKey   The returned object property name for the value
-	 * @param   string  $optText  The returned object property name for the text
-	 *
-	 * @return  stdClass
-	 *
-	 * @deprecated  4.0  Use JHtmlSelect::groupedList()
-	 * @see     JHtmlSelect::groupedList()
-	 * @since   1.5
-	 */
-	public static function optgroup($text, $optKey = 'value', $optText = 'text')
-	{
-		JLog::add('JHtmlSelect::optgroup() is deprecated, use JHtmlSelect::groupedList() instead.', JLog::WARNING, 'deprecated');
-
-		// Set initial state
-		static $state = 'open';
-
-		// Toggle between open and close states:
-		switch ($state)
-		{
-			case 'open':
-				$obj = new stdClass;
-				$obj->$optKey = '<OPTGROUP>';
-				$obj->$optText = $text;
-				$state = 'close';
-				break;
-			case 'close':
-				$obj = new stdClass;
-				$obj->$optKey = '</OPTGROUP>';
-				$obj->$optText = $text;
-				$state = 'open';
-				break;
-		}
-
-		return $obj;
+		return HTMLHelper::_('select.genericlist', $data, $name, $options);
 	}
 
 	/**
@@ -529,14 +445,14 @@ abstract class JHtmlSelect
 	 * @param   mixed    $optKey     If a string, this is the name of the object variable for
 	 *                               the option value. If null, the index of the array of objects is used. If
 	 *                               an array, this is a set of options, as key/value pairs. Valid options are:
-	 *                               -Format options, {@see JHtml::$formatOptions}.
+	 *                               -Format options, {@see HTMLHelper::$formatOptions}.
 	 *                               -groups: Boolean. If set, looks for keys with the value
 	 *                                "&lt;optgroup>" and synthesizes groups from them. Deprecated. Defaults
 	 *                                true for backwards compatibility.
 	 *                               -list.select: either the value of one selected option or an array
 	 *                                of selected options. Default: none.
 	 *                               -list.translate: Boolean. If set, text and labels are translated via
-	 *                                JText::_(). Default is false.
+	 *                                Text::_(). Default is false.
 	 *                               -option.id: The property in each option array to use as the
 	 *                                selection id attribute. Defaults to none.
 	 *                               -option.key: The property in each option array to use as the
@@ -567,7 +483,7 @@ abstract class JHtmlSelect
 	public static function options($arr, $optKey = 'value', $optText = 'text', $selected = null, $translate = false)
 	{
 		$options = array_merge(
-			JHtml::$formatOptions,
+			HTMLHelper::$formatOptions,
 			static::$optionDefaults['option'],
 			array('format.depth' => 0, 'groups' => true, 'list.select' => null, 'list.translate' => false)
 		);
@@ -675,7 +591,7 @@ abstract class JHtmlSelect
 
 			if ($key === '<OPTGROUP>' && $options['groups'])
 			{
-				$html .= $baseIndent . '<optgroup label="' . ($options['list.translate'] ? JText::_($text) : $text) . '">' . $options['format.eol'];
+				$html .= $baseIndent . '<optgroup label="' . ($options['list.translate'] ? Text::_($text) : $text) . '">' . $options['format.eol'];
 				$baseIndent = str_repeat($options['format.indent'], ++$options['format.depth']);
 			}
 			elseif ($key === '</OPTGROUP>' && $options['groups'])
@@ -696,7 +612,7 @@ abstract class JHtmlSelect
 
 				if (!empty($label) && $options['list.translate'])
 				{
-					$label = JText::_($label);
+					$label = Text::_($label);
 				}
 
 				if ($options['option.label.toHtml'])
@@ -735,7 +651,7 @@ abstract class JHtmlSelect
 
 				if ($options['list.translate'])
 				{
-					$text = JText::_($text);
+					$text = Text::_($text);
 				}
 
 				// Generate the option, encoding as required
@@ -780,8 +696,10 @@ abstract class JHtmlSelect
 
 		foreach ($data as $obj)
 		{
+			$html .= '<div class="form-check form-check-inline">';
+
 			$k = $obj->$optKey;
-			$t = $translate ? JText::_($obj->$optText) : $obj->$optText;
+			$t = $translate ? Text::_($obj->$optText) : $obj->$optText;
 			$id = (isset($obj->id) ? $obj->id : null);
 
 			$extra = '';
@@ -805,15 +723,13 @@ abstract class JHtmlSelect
 				$extra .= ((string) $k === (string) $selected ? ' checked="checked" ' : '');
 			}
 
-			$html .= "\n\t" . '<label for="' . $id . '" id="' . $id . '-lbl" class="radio">';
-			$html .= "\n\t\n\t" . '<input type="radio" name="' . $name . '" id="' . $id . '" value="' . $k . '" ' . $extra
-				. $attribs . ' />' . $t;
-			$html .= "\n\t" . '</label>';
+			$html .= '<input type="radio" class="form-check-input" name="' . $name . '" id="' . $id . '" value="' . $k . '" '
+					. $extra . $attribs . '>';
+			$html .= '<label for="' . $id . '" class="form-check-label" id="' . $id . '-lbl">' . $t . '</label>';
+			$html .= '</div>';
 		}
 
-		$html .= "\n";
 		$html .= '</div>';
-		$html .= "\n";
 
 		return $html;
 	}

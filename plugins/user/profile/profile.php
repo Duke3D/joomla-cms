@@ -3,12 +3,20 @@
  * @package     Joomla.Plugin
  * @subpackage  User.profile
  *
- * @copyright   Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright   Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Date\Date;
+use Joomla\CMS\Factory;
+use Joomla\CMS\Form\Form;
+use Joomla\CMS\Form\FormHelper;
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\CMS\String\PunycodeHelper;
 use Joomla\Utilities\ArrayHelper;
 
 /**
@@ -16,7 +24,7 @@ use Joomla\Utilities\ArrayHelper;
  *
  * @since  1.6
  */
-class PlgUserProfile extends JPlugin
+class PlgUserProfile extends CMSPlugin
 {
 	/**
 	 * Date of birth.
@@ -45,7 +53,7 @@ class PlgUserProfile extends JPlugin
 	public function __construct(& $subject, $config)
 	{
 		parent::__construct($subject, $config);
-		JFormHelper::addFieldPath(__DIR__ . '/field');
+		FormHelper::addFieldPath(__DIR__ . '/field');
 	}
 
 	/**
@@ -68,28 +76,26 @@ class PlgUserProfile extends JPlugin
 
 		if (is_object($data))
 		{
-			$userId = isset($data->id) ? $data->id : 0;
+			$userId = $data->id ?? 0;
 
 			if (!isset($data->profile) && $userId > 0)
 			{
 				// Load the profile data from the database.
-				$db = JFactory::getDbo();
-				$db->setQuery(
-					'SELECT profile_key, profile_value FROM #__user_profiles'
-						. ' WHERE user_id = ' . (int) $userId . " AND profile_key LIKE 'profile.%'"
-						. ' ORDER BY ordering'
-				);
+				$db = Factory::getDbo();
+				$query = $db->getQuery(true)
+					->select(
+						array(
+							$db->quoteName('profile_key'),
+							$db->quoteName('profile_value'),
+						)
+					)
+					->from('#__user_profiles')
+					->where($db->quoteName('user_id') . ' = ' . $db->quote((int) $userId))
+					->where($db->quoteName('profile_key') . ' LIKE ' . $db->quote('profile.%'))
+					->order($db->quoteName('ordering'));
 
-				try
-				{
-					$results = $db->loadRowList();
-				}
-				catch (RuntimeException $e)
-				{
-					$this->_subject->setError($e->getMessage());
-
-					return false;
-				}
+				$db->setQuery($query);
+				$results = $db->loadRowList();
 
 				// Merge the profile data.
 				$data->profile = array();
@@ -106,24 +112,24 @@ class PlgUserProfile extends JPlugin
 				}
 			}
 
-			if (!JHtml::isRegistered('users.url'))
+			if (!HTMLHelper::isRegistered('users.url'))
 			{
-				JHtml::register('users.url', array(__CLASS__, 'url'));
+				HTMLHelper::register('users.url', array(__CLASS__, 'url'));
 			}
 
-			if (!JHtml::isRegistered('users.calendar'))
+			if (!HTMLHelper::isRegistered('users.calendar'))
 			{
-				JHtml::register('users.calendar', array(__CLASS__, 'calendar'));
+				HTMLHelper::register('users.calendar', array(__CLASS__, 'calendar'));
 			}
 
-			if (!JHtml::isRegistered('users.tos'))
+			if (!HTMLHelper::isRegistered('users.tos'))
 			{
-				JHtml::register('users.tos', array(__CLASS__, 'tos'));
+				HTMLHelper::register('users.tos', array(__CLASS__, 'tos'));
 			}
 
-			if (!JHtml::isRegistered('users.dob'))
+			if (!HTMLHelper::isRegistered('users.dob'))
 			{
-				JHtml::register('users.dob', array(__CLASS__, 'dob'));
+				HTMLHelper::register('users.dob', array(__CLASS__, 'dob'));
 			}
 		}
 
@@ -141,12 +147,12 @@ class PlgUserProfile extends JPlugin
 	{
 		if (empty($value))
 		{
-			return JHtml::_('users.value', $value);
+			return HTMLHelper::_('users.value', $value);
 		}
 		else
 		{
 			// Convert website URL to utf8 for display
-			$value = JStringPunycode::urlToUTF8(htmlspecialchars($value));
+			$value = PunycodeHelper::urlToUTF8(htmlspecialchars($value));
 
 			if (strpos($value, 'http') === 0)
 			{
@@ -170,11 +176,11 @@ class PlgUserProfile extends JPlugin
 	{
 		if (empty($value))
 		{
-			return JHtml::_('users.value', $value);
+			return HTMLHelper::_('users.value', $value);
 		}
 		else
 		{
-			return JHtml::_('date', $value, null, null);
+			return HTMLHelper::_('date', $value, null, null);
 		}
 	}
 
@@ -192,7 +198,7 @@ class PlgUserProfile extends JPlugin
 			return '';
 		}
 
-		return JHtml::_('date', $value, JText::_('DATE_FORMAT_LC1'), false);
+		return HTMLHelper::_('date', $value, Text::_('DATE_FORMAT_LC1'), false);
 	}
 
 	/**
@@ -206,25 +212,25 @@ class PlgUserProfile extends JPlugin
 	{
 		if ($value)
 		{
-			return JText::_('JYES');
+			return Text::_('JYES');
 		}
 		else
 		{
-			return JText::_('JNO');
+			return Text::_('JNO');
 		}
 	}
 
 	/**
 	 * Adds additional fields to the user editing form
 	 *
-	 * @param   JForm  $form  The form to be altered.
+	 * @param   Form   $form  The form to be altered.
 	 * @param   mixed  $data  The associated data for the form.
 	 *
 	 * @return  boolean
 	 *
 	 * @since   1.6
 	 */
-	public function onContentPrepareForm(JForm $form, $data)
+	public function onContentPrepareForm(Form $form, $data)
 	{
 		// Check we are manipulating a valid form.
 		$name = $form->getName();
@@ -235,7 +241,7 @@ class PlgUserProfile extends JPlugin
 		}
 
 		// Add the registration fields to the form.
-		JForm::addFormPath(__DIR__ . '/profiles');
+		Form::addFormPath(__DIR__ . '/profiles');
 		$form->loadFile('profile');
 
 		$fields = array(
@@ -254,7 +260,7 @@ class PlgUserProfile extends JPlugin
 		);
 
 		// Change fields description when displayed in frontend or backend profile editing
-		$app = JFactory::getApplication();
+		$app = Factory::getApplication();
 
 		if ($app->isClient('site') || $name === 'com_users.user' || $name === 'com_admin.profile')
 		{
@@ -362,32 +368,32 @@ class PlgUserProfile extends JPlugin
 		{
 			try
 			{
-				$date = new JDate($data['profile']['dob']);
+				$date = new Date($data['profile']['dob']);
 				$this->date = $date->format('Y-m-d H:i:s');
 			}
 			catch (Exception $e)
 			{
 				// Throw an exception if date is not valid.
-				throw new InvalidArgumentException(JText::_('PLG_USER_PROFILE_ERROR_INVALID_DOB'));
+				throw new InvalidArgumentException(Text::_('PLG_USER_PROFILE_ERROR_INVALID_DOB'));
 			}
 
-			if (JDate::getInstance('now') < $date)
+			if (Date::getInstance('now') < $date)
 			{
 				// Throw an exception if dob is greather than now.
-				throw new InvalidArgumentException(JText::_('PLG_USER_PROFILE_ERROR_INVALID_DOB_FUTURE_DATE'));
+				throw new InvalidArgumentException(Text::_('PLG_USER_PROFILE_ERROR_INVALID_DOB_FUTURE_DATE'));
 			}
 		}
 
 		// Check that the tos is checked if required ie only in registration from frontend.
-		$task       = JFactory::getApplication()->input->getCmd('task');
-		$option     = JFactory::getApplication()->input->getCmd('option');
+		$task       = Factory::getApplication()->input->getCmd('task');
+		$option     = Factory::getApplication()->input->getCmd('option');
 		$tosArticle = $this->params->get('register_tos_article');
 		$tosEnabled = ($this->params->get('register-require_tos', 0) == 2);
 
 		// Check that the tos is checked.
 		if ($task === 'register' && $tosEnabled && $tosArticle && $option === 'com_users' && !$data['profile']['tos'])
 		{
-			throw new InvalidArgumentException(JText::_('PLG_USER_PROFILE_FIELD_TOS_DESC_SITE'));
+			throw new InvalidArgumentException(Text::_('PLG_USER_PROFILE_FIELD_TOS_DESC_SITE'));
 		}
 
 		return true;
@@ -409,60 +415,52 @@ class PlgUserProfile extends JPlugin
 
 		if ($userId && $result && isset($data['profile']) && count($data['profile']))
 		{
-			try
+			$db = Factory::getDbo();
+
+			// Sanitize the date
+			if (!empty($data['profile']['dob']))
 			{
-				$db = JFactory::getDbo();
-
-				// Sanitize the date
-				if (!empty($data['profile']['dob']))
-				{
-					$data['profile']['dob'] = $this->date;
-				}
-
-				$keys = array_keys($data['profile']);
-
-				foreach ($keys as &$key)
-				{
-					$key = 'profile.' . $key;
-					$key = $db->quote($key);
-				}
-
-				$query = $db->getQuery(true)
-					->delete($db->quoteName('#__user_profiles'))
-					->where($db->quoteName('user_id') . ' = ' . (int) $userId)
-					->where($db->quoteName('profile_key') . ' IN (' . implode(',', $keys) . ')');
-				$db->setQuery($query);
-				$db->execute();
-
-				$query = $db->getQuery(true)
-					->select($db->quoteName('ordering'))
-					->from($db->quoteName('#__user_profiles'))
-					->where($db->quoteName('user_id') . ' = ' . (int) $userId);
-				$db->setQuery($query);
-				$usedOrdering = $db->loadColumn();
-
-				$tuples = array();
-				$order = 1;
-
-				foreach ($data['profile'] as $k => $v)
-				{
-					while (in_array($order, $usedOrdering))
-					{
-						$order++;
-					}
-
-					$tuples[] = '(' . $userId . ', ' . $db->quote('profile.' . $k) . ', ' . $db->quote(json_encode($v)) . ', ' . ($order++) . ')';
-				}
-
-				$db->setQuery('INSERT INTO #__user_profiles VALUES ' . implode(', ', $tuples));
-				$db->execute();
+				$data['profile']['dob'] = $this->date;
 			}
-			catch (RuntimeException $e)
+
+			$keys = array_keys($data['profile']);
+
+			foreach ($keys as &$key)
 			{
-				$this->_subject->setError($e->getMessage());
-
-				return false;
+				$key = 'profile.' . $key;
+				$key = $db->quote($key);
 			}
+
+			$query = $db->getQuery(true)
+				->delete($db->quoteName('#__user_profiles'))
+				->where($db->quoteName('user_id') . ' = ' . (int) $userId)
+				->where($db->quoteName('profile_key') . ' IN (' . implode(',', $keys) . ')');
+			$db->setQuery($query);
+			$db->execute();
+
+			$query->clear()
+				->select($db->quoteName('ordering'))
+				->from($db->quoteName('#__user_profiles'))
+				->where($db->quoteName('user_id') . ' = ' . (int) $userId);
+			$db->setQuery($query);
+			$usedOrdering = $db->loadColumn();
+
+			$order = 1;
+			$query->clear()
+				->insert($db->quoteName('#__user_profiles'));
+
+			foreach ($data['profile'] as $k => $v)
+			{
+				while (in_array($order, $usedOrdering))
+				{
+					$order++;
+				}
+
+				$query->values(implode(', ', $db->quote([$userId, 'profile.' . $k, json_encode($v), $order++])));
+			}
+
+			$db->setQuery($query);
+			$db->execute();
 		}
 
 		return true;
@@ -474,7 +472,7 @@ class PlgUserProfile extends JPlugin
 	 * Method is called after user data is deleted from the database
 	 *
 	 * @param   array    $user     Holds the user data
-	 * @param   boolean  $success  True if user was succesfully stored in the database
+	 * @param   boolean  $success  True if user was successfully stored in the database
 	 * @param   string   $msg      Message
 	 *
 	 * @return  boolean
@@ -490,22 +488,14 @@ class PlgUserProfile extends JPlugin
 
 		if ($userId)
 		{
-			try
-			{
-				$db = JFactory::getDbo();
-				$db->setQuery(
-					'DELETE FROM #__user_profiles WHERE user_id = ' . $userId
-						. " AND profile_key LIKE 'profile.%'"
-				);
+			$db = Factory::getDbo();
+			$query = $db->getQuery(true)
+				->delete($db->quoteName('#__user_profiles'))
+				->where($db->quoteName('user_id') . ' = ' . $db->quote((int) $userId))
+				->where($db->quoteName('profile_key') . ' LIKE ' . $db->quote('profile.%'));
 
-				$db->execute();
-			}
-			catch (Exception $e)
-			{
-				$this->_subject->setError($e->getMessage());
-
-				return false;
-			}
+			$db->setQuery($query);
+			$db->execute();
 		}
 
 		return true;

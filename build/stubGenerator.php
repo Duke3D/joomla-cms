@@ -2,7 +2,7 @@
 /**
  * @package    Joomla.Build
  *
- * @copyright  Copyright (C) 2005 - 2018 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -11,6 +11,7 @@ const _JEXEC = 1;
 
 // Import namespaced classes
 use Joomla\CMS\Application\CliApplication;
+use Joomla\CMS\Factory;
 
 // Load system defines
 if (file_exists(dirname(__DIR__) . '/defines.php'))
@@ -25,10 +26,7 @@ if (!defined('_JDEFINES'))
 }
 
 // Get the Platform with legacy libraries.
-require_once JPATH_LIBRARIES . '/import.legacy.php';
-
-// Bootstrap the CMS libraries.
-require_once JPATH_LIBRARIES . '/cms.php';
+require_once JPATH_LIBRARIES . '/bootstrap.php';
 
 // Configure error reporting to maximum for CLI output.
 error_reporting(E_ALL);
@@ -51,6 +49,8 @@ ini_set('display_errors', 1);
  */
 class StubGenerator extends CliApplication
 {
+	use \Joomla\CMS\Application\ExtensionNamespaceMapper;
+
 	/**
 	 * Entry point for CLI script
 	 *
@@ -60,6 +60,8 @@ class StubGenerator extends CliApplication
 	 */
 	public function doExecute()
 	{
+		$this->createExtensionNamespaceMap();
+
 		$file = "<?php\n";
 
 		// Loop the aliases to generate the stubs data
@@ -97,5 +99,22 @@ PHP;
 	}
 }
 
-// Instantiate the application and execute it
-CliApplication::getInstance('StubGenerator')->execute();
+Factory::getContainer()->share(
+	'StubGenerator',
+	function (\Joomla\DI\Container $container)
+	{
+		return new \StubGenerator(
+			null,
+			null,
+			null,
+			null,
+			$container->get(\Joomla\Event\DispatcherInterface::class),
+			$container
+		);
+	},
+	true
+);
+
+$app = Factory::getContainer()->get('StubGenerator');
+Factory::$application = $app;
+$app->execute();
