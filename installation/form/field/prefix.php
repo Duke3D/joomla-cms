@@ -74,6 +74,15 @@ class InstallationFormFieldPrefix extends JFormField
 		else
 		{
 			$prefix = $session['db_prefix'];
+
+			// Ensure user-provided prefix is lowercase to align saved value in configuration.php with MySQL default case conversion
+			$prefix = strtolower($prefix);
+
+			// If prefix typed by user does not include the underscore then append the underscore.
+			if (strpos($prefix, '_') === false)
+			{
+				$prefix .= '_';
+			}
 		}
 
 		// Initialize JavaScript field attributes.
